@@ -22,18 +22,18 @@ def convert_keys_to_str(obj):
 def main():
     # Define the experiment configuration.
     experiment_config = {
-        "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 3,        # REQUIRED
+        "mode": "motif",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
+        "num_categories": 0,        # REQUIRED
         "p": 0.25,
         "num_nodes": 20,
-        "motif_dim": 0,             # 0 for simple experiments (no motif features)
+        "motif_dim": 3,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 4,
-        "in_dim": 3,
-        "hidden_dims": [4, 4],      # REQUIRED: e.g. [16, 8, 4] for a different configuration
+        "in_dim": 1,
+        "hidden_dims": [6, 6, 3],      # REQUIRED: e.g. [16, 8, 4] for a different configuration
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -41,7 +41,7 @@ def main():
         "phase2_epochs": 10,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GCN"         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GIN"         # REQUIRED: e.g. "GCN" or "GIN"
     }
     
     # Check for required keys.
