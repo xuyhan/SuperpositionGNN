@@ -2,6 +2,7 @@
 from GraphGeneration import *
 from Model import *
 from Trainer import *
+from Visualizer import *
 from torch_geometric.data import DataLoader
 
 # =============================================================================
@@ -24,7 +25,7 @@ if __name__ == '__main__':
     test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
     
     # Instantiate a GNN model. For the simple case, we use a GCN-based model.
-    model = GNNModel(model_type="GCN", in_dim=3, hidden_dims=[4, 4], out_dim=3, freeze_final=True).to(device)
+    model = GNNModel(model_type="GCN", in_dim=3, hidden_dims=[6,6,2], out_dim=3, freeze_final=True).to(device)
     print("\nModel Architecture:")
     print(model)
     
@@ -51,4 +52,14 @@ if __name__ == '__main__':
     
     # Evaluate the model.
     print("\nEvaluating Model:")
-    trainer.evaluate()
+    avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions = trainer.evaluate()
+
+    # Visualization:
+    # In the simple mode, our targets (and hence average predictions) are 3-dimensional one-hot vectors.
+    # We use the 3D visualization function.
+    colors = ['red', 'green', 'blue']       # one color for each possible target tuple (e.g., (1,0,0), (0,1,0), (0,0,1))
+    markers = ['o', 's', '^']                # marker styles for each type
+    # Use the keys from avg_predictions (which are pure target tuples) as the keys to plot.
+    keys_to_plot = list(avg_embeddings.keys())
+    print("\nVisualizing Average Predictions (as 3D Embeddings):")
+    Visualizer.plot_avg_hidden_embeddings_2d(avg_embeddings, colors, markers, keys_to_plot)
