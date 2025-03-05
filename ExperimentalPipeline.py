@@ -22,26 +22,26 @@ def convert_keys_to_str(obj):
 def main():
     # Define the experiment configuration.
     experiment_config = {
-        "mode": "combined",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
-        "p": 0.25,
+        "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
+        "num_categories": 5,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.3,
         "num_nodes": 20,
-        "motif_dim": 3,             # 0 for simple experiments (no motif features)
+        "motif_dim": 0,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 4,
         "in_dim": 4,
-        "hidden_dims": [6, 6, 3],      # REQUIRED: List of hidden layer dimensions
+        "hidden_dims": [6, 6, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 5,
-        "phase2_epochs": 10,
+        "phase2_epochs": 5,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GIN"         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GCN"         # REQUIRED: e.g. "GCN" or "GIN"
     }
     
     # Check for required keys.

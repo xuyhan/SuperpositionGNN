@@ -52,13 +52,25 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
             "feature_dim": experiment_config.get("num_categories", 3),
             "motif_dim": motif_dim,
             "importance": experiment_config.get("importance", (15.0, 10.0)),
-            "num_epochs": experiment_config.get("num_epochs", 5)
+            "num_epochs": experiment_config.get("num_epochs", 5),
+            "phase1_epochs": experiment_config.get("phase1_epochs", 5),
+            "phase2_epochs": experiment_config.get("phase2_epochs", 10)
         }
         
         # Create Trainer instance and train the model.
         trainer = Trainer(model, train_loader, test_loader, optimizer, criterion, experiment_config["device"], trainer_config)
-        trainer.train(num_epochs=trainer_config["num_epochs"])
+        trainer.train(num_epochs=trainer_config["phase1_epochs"])
         
+        # Phase 2: Unfreeze final layer and continue training.
+        model.lin_out.weight.requires_grad = True
+        if model.lin_out.bias is not None:
+            model.lin_out.bias.requires_grad = True
+
+        # Reinitialize optimizer with updated parameters.
+        optimizer = optim.Adam(model.parameters(), lr=experiment_config.get("lr", 0.01))
+        trainer.optimizer = optimizer  # Update the trainer's optimizer.
+        trainer.train(num_epochs=trainer_config["phase2_epochs"])
+
         # Evaluate the model using the Trainer instance
         avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions = trainer.evaluate()
         total_target_dim = experiment_config.get("num_categories", 3) + motif_dim
