@@ -9,8 +9,9 @@ from torch_geometric.nn import GCNConv, GINConv, global_mean_pool
 # ----------------------------
 def equiangular_frame(out_dim, hidden_dim):
     """
-    Returns a fixed weight matrix of shape [out_dim, hidden_dim] with
-    an equiangular configuration for some special cases.
+    Returns a fixed weight matrix with an equiangular configuration for some special cases.
+
+    This helps in setting up the final linear layer in a specific configuration.
     """
     if out_dim == 3 and hidden_dim == 2:
         return torch.tensor([
@@ -33,12 +34,31 @@ def equiangular_frame(out_dim, hidden_dim):
             [math.cos(3 * 2*math.pi/5), math.sin(3 * 2*math.pi/5)],
             [math.cos(4 * 2*math.pi/5), math.sin(4 * 2*math.pi/5)]
         ])
+    elif out_dim == 6 and hidden_dim == 2:
+        return torch.tensor([
+            [math.cos(0 * 2*math.pi/6), math.sin(0 * 2*math.pi/6)],
+            [math.cos(1 * 2*math.pi/6), math.sin(1 * 2*math.pi/6)],
+            [math.cos(2 * 2*math.pi/6), math.sin(2 * 2*math.pi/6)],
+            [math.cos(3 * 2*math.pi/6), math.sin(3 * 2*math.pi/6)],
+            [math.cos(4 * 2*math.pi/6), math.sin(4 * 2*math.pi/6)],
+            [math.cos(5 * 2*math.pi/6), math.sin(5 * 2*math.pi/6)]
+        ])
     elif out_dim == 4 and hidden_dim == 3:
         return torch.tensor([
             [1.0, 0.0, -math.sqrt(0.5)],
             [-1.0, 0.0, -math.sqrt(0.5)],
             [0.0, 1.0, math.sqrt(0.5)],
             [0.0, -1.0, math.sqrt(0.5)]
+        ])
+    elif out_dim == 6 and hidden_dim == 3:
+        # Return the 6 vertices of a regular octahedron in 3D.
+        return torch.tensor([
+            [1.0,  0.0,  0.0],
+            [-1.0, 0.0,  0.0],
+            [0.0,  1.0,  0.0],
+            [0.0, -1.0,  0.0],
+            [0.0,  0.0,  1.0],
+            [0.0,  0.0, -1.0]
         ])
     else:
         raise ValueError("Equiangular frame not implemented for (out_dim={}, hidden_dim={}).".format(out_dim, hidden_dim))
