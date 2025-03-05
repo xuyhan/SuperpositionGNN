@@ -4,6 +4,7 @@ from Model import *
 from Trainer import *
 from Visualizer import *
 from torch_geometric.data import DataLoader
+from Runner import run_multiple_experiments
 
 # =============================================================================
 # Main Execution: Use Simple Mode Data for Training
@@ -63,3 +64,39 @@ if __name__ == '__main__':
     keys_to_plot = list(avg_embeddings.keys())
     print("\nVisualizing Average Predictions (as 3D Embeddings):")
     Visualizer.plot_avg_hidden_embeddings_2d(avg_embeddings, colors, markers, keys_to_plot)
+
+
+if __name__ == '__main__':
+    # Define experiment configuration.
+    experiment_config = {
+        "mode": "simple",           # Options: "simple", "motif", "correlated", "combined"
+        "num_categories": 3,
+        "p": 0.25,
+        "num_nodes": 20,
+        "motif_dim": 0,             # 0 for simple experiments
+        "chain_length_min": 2,
+        "chain_length_max": 7,
+        "num_train_samples": 10000,
+        "num_test_samples": 3000,
+        "batch_size": 4,
+        "in_dim": 3,
+        "hidden_dims": [6, 2],
+        "lr": 0.01,
+        "use_weighting": True,
+        "importance": (15.0, 10.0),
+        "phase1_epochs": 5,
+        "phase2_epochs": 10,
+        "num_epochs": 5,
+        "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+        "model_type": "GCN"
+    }
+    
+    results = run_multiple_experiments(experiment_config, num_experiments=3)
+    
+    # Perform geometry analysis on the results.
+    config_losses = Trainer.geometry_analysis(results)
+    summary = Trainer.summarize_config_losses(config_losses)
+
+    print("\nExperiment Loss Summary:")
+    for config, stats in summary.items():
+        print(f"{config} : {stats}")
