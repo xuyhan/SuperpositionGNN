@@ -279,6 +279,4 @@ class SyntheticGraphDataGenerator:
         """
         return [self.generate_single_graph() for _ in range(num_samples)]
 
-# =============================================================================
-# Example usage:
-# =============================================================================
+
