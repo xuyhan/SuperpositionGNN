@@ -1,3 +1,4 @@
+import os
 import json
 import torch
 from datetime import datetime
@@ -65,6 +66,14 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"exp_{mode}_{model_type}_{num_categories}cats_{final_hidden_dim}hidden_{timestamp}.json"
     
+    # Specify the folder where you want to save the file.
+    folder = "experiment_results"
+    # Create the folder if it doesn't exist.
+    os.makedirs(folder, exist_ok=True)
+    
+    # Combine folder and file name into a full path.
+    file_path = os.path.join(folder, file_name)
+    
     # Prepare output dictionary.
     output = {
         "experiment_config": experiment_config,
@@ -75,8 +84,7 @@ def main():
     output_str = convert_keys_to_str(output)
     
     # Save the experiment configuration and summary into the JSON file.
-    with open(file_name, "w") as f:
+    with open(file_path, "w") as f:
         json.dump(output_str, f, indent=4)
     
-    print(f"\nExperiment results saved to {file_name}")
-
+    print(f"\nExperiment results saved to {file_path}")

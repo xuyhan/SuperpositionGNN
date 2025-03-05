@@ -10,7 +10,7 @@ from ExperimentalPipeline import main
 # =============================================================================
 # Main Execution: Use Simple Mode Data for Training
 # =============================================================================
-if __name__ == '__main__':
+if __name__ == '__main__(DELETE FOR SIMPLE)':
     # Set device.
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     main()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__(DELETE FOR MULTIPLE RUNS)':
     # Define experiment configuration.
     experiment_config = {
         "mode": "simple",           # Options: "simple", "motif", "correlated", "combined"
