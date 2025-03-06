@@ -2,11 +2,12 @@ import torch
 import torch.optim as optim
 from torch_geometric.data import DataLoader
 from GraphGeneration import SyntheticGraphDataGenerator
-from Model import GNNModel  # Use your actual model class
+from Model import *
 from Trainer import Trainer  # Trainer now includes geometry_analysis, etc.
 
 def run_multiple_experiments(experiment_config, num_experiments=10):
     results = []
+    all_model_params = []
     for i in range(num_experiments):
         print(f"\nRunning experiment {i+1}/{num_experiments}...")
         
@@ -71,9 +72,25 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         trainer.optimizer = optimizer  # Update the trainer's optimizer.
         trainer.train(num_epochs=trainer_config["phase2_epochs"])
 
+        # Extract model parameters for analysis
+        model_params = extract_model_parameters(model)
+        all_model_params.append(model_params)
+
         # Evaluate the model using the Trainer instance
         avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions = trainer.evaluate()
         total_target_dim = experiment_config.get("num_categories", 3) + motif_dim
         result = trainer.structure_of_representation(total_target_dim, avg_predictions, avg_embeddings, avg_loss)
         results.append(result)
-    return results
+    return results, all_model_params
+
+
+def extract_model_parameters(model):
+    """
+    Extracts and returns a dictionary of all model parameters (weights and biases)
+    from any number of layers in the given model.
+    """
+    params = {}
+    for name, param in model.named_parameters():
+        # Detach the parameter, move to CPU, and convert to a list for JSON-serialization.
+        params[name] = param.detach().cpu().tolist()
+    return params

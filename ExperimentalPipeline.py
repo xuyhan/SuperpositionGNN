@@ -4,6 +4,7 @@ import torch
 from datetime import datetime
 from Runner import run_multiple_experiments
 from Trainer import Trainer
+from GraphGeneration import sparcity_calculator
 
 def convert_keys_to_str(obj):
     """
@@ -23,8 +24,8 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 5,        # REQUIRED motif does not contibute to the number of categories
-        "p": 0.3,
+        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.2,
         "num_nodes": 20,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
@@ -32,8 +33,8 @@ def main():
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 16,
-        "in_dim": 5,
-        "hidden_dims": [6, 6, 2],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 3,
+        "hidden_dims": [3, 3],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -50,13 +51,16 @@ def main():
         if key not in experiment_config:
             raise ValueError(f"Missing required key '{key}' in experiment_config.")
     
+    # Calculate the sparcity of the initial embedding features
+    sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
+
     print("Running experiments...")
-    results = run_multiple_experiments(experiment_config, num_experiments=10)
+    results, all_model_params = run_multiple_experiments(experiment_config, num_experiments=4)
     print(f"Results: {results}")
     
     # Perform geometry analysis on the results.
-    config_losses = Trainer.geometry_analysis(results)
-    summary = Trainer.summarize_config_losses(config_losses)
+    config_losses, model_params = Trainer.geometry_analysis(results, all_model_params)
+    summary, model_summary = Trainer.summarize_config_losses(config_losses, model_params)
     
     # Dynamically build a descriptive file name.
     mode = experiment_config["mode"]
@@ -78,7 +82,10 @@ def main():
     # Prepare output dictionary.
     output = {
         "experiment_config": experiment_config,
-        "summary": summary
+        "sparcity": sparcity,
+        "summary": summary,
+        "model summary": model_summary,
+        "results": results,
     }
     
     # Convert keys/objects to strings as necessary.
@@ -107,7 +114,7 @@ def main_combined():
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
-        "batch_size": 4,
+        "batch_size": 16,
         "in_dim": 4,
         "hidden_dims": [6, 6, 3],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,

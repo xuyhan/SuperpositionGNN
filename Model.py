@@ -60,6 +60,13 @@ def equiangular_frame(out_dim, hidden_dim):
             [0.0,  0.0,  1.0],
             [0.0,  0.0, -1.0]
         ])
+    elif out_dim == 3 and hidden_dim == 3:
+        # Return the 3 vertices of a regular tetrahedron in 3D.
+        return torch.tensor([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ])
     else:
         raise ValueError("Equiangular frame not implemented for (out_dim={}, hidden_dim={}).".format(out_dim, hidden_dim))
 
