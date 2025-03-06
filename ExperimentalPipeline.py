@@ -26,7 +26,7 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
+        "num_categories": 4,        # REQUIRED motif does not contibute to the number of categories
         "p": 0.2,
         "num_nodes": 20,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
@@ -35,13 +35,13 @@ def main():
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 16,
-        "in_dim": 3,
-        "hidden_dims": [3, 3],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 4,
+        "hidden_dims": [4, 4, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 5,
-        "phase2_epochs": 5,
+        "phase2_epochs": 8,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GCN"         # REQUIRED: e.g. "GCN" or "GIN"

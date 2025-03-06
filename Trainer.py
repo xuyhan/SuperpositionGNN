@@ -215,7 +215,6 @@ class Trainer:
                 continue
             key = (res[1], res[2], res[3], res[4])
             config_losses.setdefault(key, []).append(res[5])
-            key = ("model", res[1], res[2], res[3], res[4])
             model_params.setdefault(key, []).append(all_model_params[i])
             average_embeddings.setdefault(key, []).append(all_average_embeddings[i])
         return config_losses, model_params, average_embeddings
