@@ -8,6 +8,7 @@ from Trainer import Trainer  # Trainer now includes geometry_analysis, etc.
 def run_multiple_experiments(experiment_config, num_experiments=10):
     results = []
     all_model_params = []
+    all_average_embeddings = []
     for i in range(num_experiments):
         print(f"\nRunning experiment {i+1}/{num_experiments}...")
         
@@ -81,7 +82,8 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         total_target_dim = experiment_config.get("num_categories", 3) + motif_dim
         result = trainer.structure_of_representation(total_target_dim, avg_predictions, avg_embeddings, avg_loss)
         results.append(result)
-    return results, all_model_params
+        all_average_embeddings.append(avg_embeddings)
+    return results, all_model_params, all_average_embeddings
 
 
 def extract_model_parameters(model):

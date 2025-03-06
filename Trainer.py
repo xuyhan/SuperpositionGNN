@@ -206,9 +206,10 @@ class Trainer:
             return [target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss]
 
     @staticmethod
-    def geometry_analysis(results, all_model_params):
+    def geometry_analysis(results, all_model_params, all_average_embeddings):
         config_losses = {}
         model_params = {}
+        average_embeddings = {}
         for i, res in enumerate(results):
             if res is None:
                 continue
@@ -216,12 +217,14 @@ class Trainer:
             config_losses.setdefault(key, []).append(res[5])
             key = ("model", res[1], res[2], res[3], res[4])
             model_params.setdefault(key, []).append(all_model_params[i])
-        return config_losses, model_params
+            average_embeddings.setdefault(key, []).append(all_average_embeddings[i])
+        return config_losses, model_params, average_embeddings
 
     @staticmethod
-    def summarize_config_losses(config_losses, model_params):
+    def summarize_config_losses(config_losses, model_params, average_embeddings):
         summary = {}
         model_summary = {}
+        average_embeddings_summary = {}
         for config, losses in config_losses.items():
             losses_clean = [l for l in losses if l is not None]
             avg_loss = np.mean(losses_clean)
@@ -229,5 +232,6 @@ class Trainer:
             summary[config] = (avg_loss, std_loss)
         for type in model_params.keys():
             model_summary[type] = model_params[type][0]
-        return summary, model_summary
+            average_embeddings_summary[type] = average_embeddings[type][0]
+        return summary, model_summary, average_embeddings_summary
     

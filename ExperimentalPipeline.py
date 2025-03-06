@@ -9,7 +9,7 @@ from GraphGeneration import sparcity_calculator
 def convert_keys_to_str(obj):
     """
     Recursively convert dictionary keys to strings and convert
-    non-serializable objects (like torch.device) to strings.
+    non-serializable objects (like torch.device and torch.Tensor) to strings or lists.
     """
     if isinstance(obj, dict):
         return {str(k): convert_keys_to_str(v) for k, v in obj.items()}
@@ -17,6 +17,8 @@ def convert_keys_to_str(obj):
         return [convert_keys_to_str(item) for item in obj]
     elif isinstance(obj, torch.device):
         return str(obj)
+    elif isinstance(obj, torch.Tensor):
+        return obj.detach().cpu().tolist()
     else:
         return obj
 
@@ -55,12 +57,12 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params = run_multiple_experiments(experiment_config, num_experiments=4)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=4)
     print(f"Results: {results}")
     
     # Perform geometry analysis on the results.
-    config_losses, model_params = Trainer.geometry_analysis(results, all_model_params)
-    summary, model_summary = Trainer.summarize_config_losses(config_losses, model_params)
+    config_losses, model_params, average_embeddings = Trainer.geometry_analysis(results, all_model_params, all_average_embeddings)
+    summary, model_summary, average_embeddings_summary = Trainer.summarize_config_losses(config_losses, model_params, average_embeddings)
     
     # Dynamically build a descriptive file name.
     mode = experiment_config["mode"]
@@ -85,6 +87,7 @@ def main():
         "sparcity": sparcity,
         "summary": summary,
         "model summary": model_summary,
+        "average embeddings summary": average_embeddings_summary,
         "results": results,
     }
     
