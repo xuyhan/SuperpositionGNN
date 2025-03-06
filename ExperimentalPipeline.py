@@ -31,8 +31,8 @@ def main():
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
-        "batch_size": 4,
-        "in_dim": 4,
+        "batch_size": 16,
+        "in_dim": 5,
         "hidden_dims": [6, 6, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
@@ -52,6 +52,7 @@ def main():
     
     print("Running experiments...")
     results = run_multiple_experiments(experiment_config, num_experiments=10)
+    print(f"Results: {results}")
     
     # Perform geometry analysis on the results.
     config_losses = Trainer.geometry_analysis(results)

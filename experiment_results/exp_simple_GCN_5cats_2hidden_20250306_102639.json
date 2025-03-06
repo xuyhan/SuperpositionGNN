@@ -1,0 +1,61 @@
+{
+    "experiment_config": {
+        "mode": "simple",
+        "num_categories": 5,
+        "p": 0.3,
+        "num_nodes": 20,
+        "motif_dim": 0,
+        "chain_length_min": 2,
+        "chain_length_max": 7,
+        "num_train_samples": 10000,
+        "num_test_samples": 3000,
+        "batch_size": 16,
+        "in_dim": 5,
+        "hidden_dims": [
+            6,
+            6,
+            2
+        ],
+        "lr": 0.01,
+        "use_weighting": true,
+        "importance": [
+            15.0,
+            10.0
+        ],
+        "phase1_epochs": 5,
+        "phase2_epochs": 5,
+        "num_epochs": 5,
+        "device": "cpu",
+        "model_type": "GCN"
+    },
+    "summary": {
+        "(4, 4, 4, 0)": [
+            0.119367105225722,
+            0.007469001780545284
+        ],
+        "(4, 3, 4, 0)": [
+            0.1082329819202423,
+            0.0
+        ],
+        "(5, 5, 5, 0)": [
+            0.09204129443566005,
+            0.0
+        ],
+        "(3, 3, 3, 0)": [
+            0.17756627325216928,
+            0.0
+        ],
+        "(5, 3, 5, 0)": [
+            0.10615139667193095,
+            0.0
+        ],
+        "(5, 4, 5, 0)": [
+            0.08927670296033223,
+            0.0
+        ],
+        "(3, 2, 'Failed', 0)": [
+            0.20932061966260274,
+            0.0
+        ]
+    }
+}

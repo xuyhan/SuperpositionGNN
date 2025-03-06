@@ -209,9 +209,7 @@ class Trainer:
     def geometry_analysis(results):
         config_losses = {}
         for res in results:
-            if res is None or any(item == "Failed" for item in res):
-                config_key = "Failed"
-                config_losses.setdefault(config_key, []).append(res[5] if res is not None else None)
+            if res is None:
                 continue
             key = (res[1], res[2], res[3], res[4])
             config_losses.setdefault(key, []).append(res[5])
