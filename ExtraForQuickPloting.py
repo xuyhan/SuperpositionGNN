@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-vectors_3d = {
-    "(0, 0, 1)": [-1.6151416301727295, -2.709341526031494, 1.9571001529693604],
-    "(1, 0, 0)": [2.2467129230499268, -3.1822314262390137, -1.5960817337036133],
-    "(0, 1, 0)": [-1.250248908996582, -1.6556450128555298, -1.0145666599273682]
+vectors = {
+    "(0, 0, 1)": [2.19, 13.2],
+    "(1, 0, 0)": [-17.0,-1.0],
+    "(0, 1, 0)": [2.42,-13.3]
 }
 
 def plot_vectors(vectors):
@@ -79,5 +79,4 @@ def plot_vectors(vectors):
 
 
 # Call the function with either 2D or 3D vectors:
-plot_vectors(vectors_3d)
-# plot_vectors(vectors_2d)
+plot_vectors(vectors)

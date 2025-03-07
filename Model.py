@@ -104,7 +104,7 @@ class GNNModel(nn.Module):
             prev_dim = in_dim
             # Build GCNConv layers
             for hdim in hidden_dims:
-                self.convs.append(GCNConv(prev_dim, hdim, add_self_loops=True))
+                self.convs.append(GCNConv(prev_dim, hdim, add_self_loops=False))
                 prev_dim = hdim
 
         elif self.model_type == "GIN":
@@ -129,10 +129,11 @@ class GNNModel(nn.Module):
         initialize_output_weights(self.lin_out.weight, out_dim, hidden_dims[-1])
 
         if freeze_final:
-            # Freeze only the weight so that during Phase 1 training it remains fixed.
+            # Freeze the final linear layer's weight so that during Phase 1 training it remains fixed.
             self.lin_out.weight.requires_grad = False
             if self.lin_out.bias is not None:
                 self.lin_out.bias.requires_grad = True
+
 
     def forward(self, x, edge_index, batch):
         """

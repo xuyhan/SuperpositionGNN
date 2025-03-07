@@ -59,41 +59,30 @@ def assign_weights_from_dict(model, weight_dict):
 
 def linear_graph(vectors):
     """
-    Creates a linear chain graph from a list or array of vectors.
-    
-    Parameters:
-        vectors (list or np.ndarray): A list or array of vectors. Each vector is assigned to a node.
-    
     Returns:
-        data (torch_geometric.data.Data): Graph data containing node features and edge index.
-        G (networkx.Graph): A NetworkX graph representing the same linear chain.
-        pos (dict): A dictionary of positions for nodes (useful for visualization).
+      data (torch_geometric.data.Data): Graph data with self-loops included.
+      G (networkx.Graph): NetworkX representation for visualization.
+      pos (dict): Node positions for visualization.
     """
-
-    # Determine number of nodes and convert vectors to a tensor.
     num_nodes = len(vectors)
-    x = torch.tensor(np.array(vectors), dtype=torch.float)
-    
-    # Create edge_index for a linear chain: (0 -> 1, 1 -> 2, ..., (n-2) -> (n-1))
-    if num_nodes > 1:
-        edge_list = [[i, i+1] for i in range(num_nodes - 1)]
-        # Convert to tensor and transpose to shape [2, num_edges]
-        edge_index = torch.tensor(edge_list, dtype=torch.long).t().contiguous()
-        # For an undirected graph, add reverse edges.
-        reverse_edge_index = edge_index[[1, 0], :]
-        edge_index = torch.cat([edge_index, reverse_edge_index], dim=1)
-    else:
-        edge_index = torch.empty((2, 0), dtype=torch.long)
-    
-    # Assume all nodes belong to a single graph.
+    x = torch.tensor(vectors, dtype=torch.float)
+
+    edges = []
+    # Add explicit self-loops and linear chain edges
+    for i in range(num_nodes):
+        edges.append((i, i))  # explicit self-loop
+        if i > 0:
+            edges.append((i, i - 1))
+            edges.append((i - 1, i))
+
+    edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
+
     batch = torch.zeros(num_nodes, dtype=torch.long)
     data = Data(x=x, edge_index=edge_index, batch=batch)
-    
-    # Create a NetworkX graph for visualization.
+
     G = nx.path_graph(num_nodes)
-    # Use a spring layout for positioning (or choose a layout that suits a linear graph).
     pos = nx.spring_layout(G, seed=42)
-    
+
     return data, G, pos
 
 
@@ -180,7 +169,7 @@ def animate_graph(embeddings_by_layer, G, pos):
 # -----------------------------
 def main():
     # --- Load the trained model weights from file ---
-    file_path = "experiment_results/exp_simple_GCN_4cats_2hidden_20250306_151331.json"  
+    file_path = "experiment_results/exp_simple_GCN_4cats_2hidden_20250307_120910.json"  
     data_json = load_experiment_results(file_path)
     
     # Choose the best model key from the JSON file.

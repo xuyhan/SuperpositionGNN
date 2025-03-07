@@ -44,7 +44,8 @@ def main():
         "phase2_epochs": 8,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GCN"         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "save": True
     }
     
     # Check for required keys.
@@ -95,10 +96,11 @@ def main():
     output_str = convert_keys_to_str(output)
     
     # Save the experiment configuration and summary into the JSON file.
-    with open(file_path, "w") as f:
-        json.dump(output_str, f, indent=4)
+    if experiment_config["save"] == True:
+        with open(file_path, "w") as f:
+            json.dump(output_str, f, indent=4)
     
-    print(f"\nExperiment results saved to {file_path}")
+        print(f"\nExperiment results saved to {file_path}")
 
 
 ############################################################################################################
