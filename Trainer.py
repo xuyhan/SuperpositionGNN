@@ -135,7 +135,13 @@ class Trainer:
 
     # --- Geometric Analysis Functions ---
     @staticmethod
-    def geometry_of_representation(num_active_targets, preds_dict_active, avg_embeddings_active):
+    def geometry_of_representation(avg_embeddings_active):
+        '''
+        Returns the geometry of the representation (i.e. whether or not the active embeddings 
+        are in ideal configuraion).
+        The code computes an ideal angle based on n vectors and m dimensions: n≤m returns 90° (orthogonality);
+        n=m+1 yields a regular simplex; n>m+1 employs a heuristic, effectively reducing the angle.
+        '''
         embeddings = list(avg_embeddings_active.values())
         n = len(embeddings)
         if n == 0:
@@ -180,24 +186,30 @@ class Trainer:
 
     @staticmethod
     def active_targets_in_representation(target_dim, avg_predictions, avg_embeddings):
+        '''
+        Returns the number of active and accurate targets in the representation plus the 
+        embeddings of the active targets to be used in the geometry analysis.
+        '''
         num_active_targets = 0
         num_accurate_targets = 0
-        preds_dict_active = {}
         avg_embeddings_active = {}
         sigma_accurate = 0.3
         sigma_active = 0.5
         for key, preds in avg_predictions.items():
             if all((key[i] - preds[i].item()) < sigma_active for i in range(target_dim)):
                 num_active_targets += 1
-                preds_dict_active[key] = preds
                 avg_embeddings_active[key] = avg_embeddings[key]
             if all(abs(key[i] - preds[i].item()) < sigma_accurate for i in range(target_dim)):
                 num_accurate_targets += 1
-        return num_active_targets, preds_dict_active, avg_embeddings_active, num_accurate_targets
+        return num_active_targets, avg_embeddings_active, num_accurate_targets
 
     def structure_of_representation(self, target_dim, avg_predictions, avg_embeddings, final_loss):
-        num_active_targets, preds_dict_active, avg_embeddings_active, num_accurate_targets = Trainer.active_targets_in_representation(target_dim, avg_predictions, avg_embeddings)
-        geometry, collapsed = Trainer.geometry_of_representation(num_active_targets, preds_dict_active, avg_embeddings_active)
+        '''
+        Returns the structure of the representation (i.e. the number of active targets, the number of accurate targets,
+        the geometry of the representation, and whether the representation is collapsed).
+        '''
+        num_active_targets, avg_embeddings_active, num_accurate_targets = Trainer.active_targets_in_representation(target_dim, avg_predictions, avg_embeddings)
+        geometry, collapsed = Trainer.geometry_of_representation(num_active_targets, avg_embeddings_active)
         if geometry > 0:
             category_with_loss = [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss]
             print(f"Category_with_loss: [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss] = {category_with_loss}")
@@ -207,6 +219,9 @@ class Trainer:
 
     @staticmethod
     def geometry_analysis(results, all_model_params, all_average_embeddings):
+        '''
+        Used in pipeline after running multiple experiments.
+        '''
         config_losses = {}
         model_params = {}
         average_embeddings = {}
@@ -221,6 +236,9 @@ class Trainer:
 
     @staticmethod
     def summarize_config_losses(config_losses, model_params, average_embeddings):
+        '''
+        Used in pipeline after geometry analysis.
+        '''
         summary = {}
         model_summary = {}
         average_embeddings_summary = {}
