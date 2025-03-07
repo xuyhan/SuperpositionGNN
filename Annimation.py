@@ -129,7 +129,7 @@ def animate_graph(embeddings_by_layer, G, default_pos):
         else:
             # If the embeddings are 2D, draw an arrow for each node.
             if layer_emb.ndim == 2 and layer_emb.shape[1] == 2:
-                scale = 0.5  # Scale factor for arrow length.
+                scale = 0.03  # Scale factor for arrow length.
                 for i, (pos_x, pos_y) in default_pos.items():
                     vec = layer_emb[i]
                     dx = vec[0] * scale

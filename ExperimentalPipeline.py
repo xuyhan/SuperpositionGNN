@@ -58,7 +58,7 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=30)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=5)
     print(f"Results: {results}")
     
     # Perform geometry analysis on the results.

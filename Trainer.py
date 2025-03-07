@@ -228,7 +228,7 @@ class Trainer:
             losses_clean = [l for l in losses if l is not None]
             avg_loss = np.mean(losses_clean)
             std_loss = np.std(losses_clean)
-            summary[config] = (avg_loss, std_loss)
+            summary[config] = (avg_loss, std_loss, len(losses_clean))
         for type in model_params.keys():
             model_summary[type] = model_params[type][0]
             average_embeddings_summary[type] = average_embeddings[type][0]
