@@ -1,18 +1,21 @@
 import json
 import math
+import random
 import numpy as np
 import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.widgets import Slider, Button
-from sklearn.decomposition import PCA
-
-# Import your GNN model.
-from Model import GNNModel  # Adjust the import according to your file structure
 
 # PyG imports
 from torch_geometric.data import Data
+
+# -----------------------------
+# Import model and data generator classes
+# -----------------------------
+from Model import GNNModel  # This file defines both GCN and GIN variants.
+from GraphGeneration import SyntheticGraphDataGenerator  # Contains the motif generator.
 
 # -----------------------------
 # Helper functions
@@ -24,7 +27,7 @@ def load_experiment_results(file_path):
 
 def choose_best_model_key(data):
     """
-    Choose the best model key from the summary (lowest average loss).
+    Chooses the best model key from the summary (lowest average loss).
     Assumes data["summary"] maps a key string to [avg_loss, std_loss].
     """
     summary = data["summary"]
@@ -35,18 +38,16 @@ def choose_best_model_key(data):
             best_loss = avg_loss
             best_key = k
     return best_key
-    
 
 def assign_weights_from_dict(model, weight_dict):
     """
-    Given a GNN model and a dictionary of weights (as stored in the JSON file),
-    assign the weights to the model. Assumes the keys in weight_dict match
-    the keys of model.state_dict() (or at least the conv and linear layer parameters).
+    Assigns weights from the dictionary to the model.
+    The weight_dict keys must match the model.state_dict() keys.
     """
     state_dict = model.state_dict()
     for key, value in weight_dict.items():
         if key in state_dict:
-            # Convert the value (list) into a tensor with the proper type and device.
+            # Convert list to tensor using the same type and device.
             tensor_value = torch.tensor(value, dtype=state_dict[key].dtype, device=state_dict[key].device)
             state_dict[key].copy_(tensor_value)
         else:
@@ -54,159 +55,193 @@ def assign_weights_from_dict(model, weight_dict):
     model.load_state_dict(state_dict)
 
 # -----------------------------
-# Function for toy graph generation
+# Graph construction for "simple" mode
 # -----------------------------
-
 def linear_graph(vectors):
     """
-    Returns:
-      data (torch_geometric.data.Data): Graph data with self-loops included.
-      G (networkx.Graph): NetworkX representation for visualization.
-      pos (dict): Node positions for visualization.
+    Constructs a simple linear graph (with self-loops) from a list of vectors.
+    Returns: PyG Data, a NetworkX graph, and node positions.
     """
     num_nodes = len(vectors)
     x = torch.tensor(vectors, dtype=torch.float)
-
     edges = []
-    # Add explicit self-loops and linear chain edges
+    # Add self-loops and chain edges.
     for i in range(num_nodes):
-        edges.append((i, i))  # explicit self-loop
+        edges.append((i, i))
         if i > 0:
             edges.append((i, i - 1))
             edges.append((i - 1, i))
-
     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
-
     batch = torch.zeros(num_nodes, dtype=torch.long)
     data = Data(x=x, edge_index=edge_index, batch=batch)
-
+    # Use a simple path graph (which does not have self-loops) for visualization.
     G = nx.path_graph(num_nodes)
     pos = nx.spring_layout(G, seed=42)
-
     return data, G, pos
 
-
 # -----------------------------
-# Compute hidden embeddings using message passing
+# Compute hidden embeddings layer-by-layer
 # -----------------------------
 def compute_hidden_embeddings(model, data):
     """
-    Performs a forward pass through the GNN's conv layers (with ReLU in between)
-    to compute the node hidden embeddings layer-by-layer.
-    Returns a list of embeddings (numpy arrays) for each layer (starting with input features).
+    Computes node hidden embeddings for each conv layer.
+    For GIN layers, note that the returned value is the final output after the internal MLP.
     """
     x = data.x.clone()
     embeddings_by_layer = [x.detach().cpu().numpy()]
-    
-    # Pass through each convolution layer
     for i, conv in enumerate(model.convs):
         x = conv(x, data.edge_index)
         if i < len(model.convs) - 1:
             x = F.relu(x)
         embeddings_by_layer.append(x.detach().cpu().numpy())
-        
     return embeddings_by_layer
 
 # -----------------------------
-# Animation with interactive slider
+# Animation code: show arrows for 2D embeddings (except for layer 0)
 # -----------------------------
-def animate_graph(embeddings_by_layer, G, pos):
+def animate_graph(embeddings_by_layer, G, default_pos):
     """
-    Creates an interactive animation showing the test graph with node embeddings.
-    Each node is drawn as a dot with its embedding printed next to it.
-    A slider and a "Next" button let the user step through the layers.
-    """
-    num_layers = len(embeddings_by_layer)
+    Animates the evolution of node embeddings.
     
+    For layer 0 (input features), text annotations are shown.
+    For later layers, if the embeddings are 2D, an arrow (in red) is drawn for each node.
+    The arrow originates from the fixed node position (default_pos) and is scaled for visibility.
+    
+    Self-loops are not drawn.
+    """
     fig, ax = plt.subplots(figsize=(8, 6))
     plt.subplots_adjust(bottom=0.2)
-
-    # Draw graph edges and nodes.
-    nx.draw_networkx_edges(G, pos, ax=ax)
-    nx.draw_networkx_nodes(G, pos, ax=ax, node_color='lightblue', node_size=500)
     
-    # Create text annotations for each node (using full embedding as tuple)
-    texts = {}
-    for n, (xx, yy) in pos.items():
-        arr = embeddings_by_layer[0][n]
-        # Build a string with exactly two decimal places per value:
-        text_str = "(" + ", ".join(f"{float(v):.2f}" for v in arr) + ")"  # <-- CHANGED
-        texts[n] = ax.text(xx, yy, text_str, fontsize=9, ha='right', va='bottom')
+    def draw_graph(current_layer):
+        ax.clear()
+        # Draw graph edges and nodes using the fixed layout.
+        nx.draw_networkx_edges(G, default_pos, ax=ax)
+        nx.draw_networkx_nodes(G, default_pos, ax=ax, node_color='lightblue', node_size=500)
+        ax.set_title(f"Layer {current_layer}")
+        ax.axis('off')
+        
+        layer_emb = embeddings_by_layer[current_layer]
+        # For the first layer, we show text annotations.
+        if current_layer == 0:
+            for i, (pos_x, pos_y) in default_pos.items():
+                text_str = "(" + ", ".join(f"{float(v):.2f}" for v in layer_emb[i]) + ")"
+                ax.text(pos_x, pos_y, text_str, fontsize=9, ha='right', va='bottom')
+        else:
+            # If the embeddings are 2D, draw an arrow for each node.
+            if layer_emb.ndim == 2 and layer_emb.shape[1] == 2:
+                scale = 0.5  # Scale factor for arrow length.
+                for i, (pos_x, pos_y) in default_pos.items():
+                    vec = layer_emb[i]
+                    dx = vec[0] * scale
+                    dy = vec[1] * scale
+                    ax.arrow(pos_x, pos_y, dx, dy, head_width=0.05, head_length=0.1, fc='red', ec='red')
+            else:
+                # Otherwise, fallback to text annotations.
+                for i, (pos_x, pos_y) in default_pos.items():
+                    text_str = "(" + ", ".join(f"{float(v):.2f}" for v in layer_emb[i]) + ")"
+                    ax.text(pos_x, pos_y, text_str, fontsize=9, ha='right', va='bottom')
     
-    ax.set_title("Layer 0")
-    ax.axis('off')
-
-    # Slider setup.
+    draw_graph(0)
+    num_layers = len(embeddings_by_layer)
+    
     slider_ax = plt.axes([0.2, 0.05, 0.6, 0.03])
     layer_slider = Slider(slider_ax, 'Layer', 0, num_layers - 1, valinit=0, valstep=1)
-
+    
     def update(val):
-        layer = int(layer_slider.val)
-        ax.set_title(f"Layer {layer}")
-        for n in G.nodes():
-            arr = embeddings_by_layer[layer][n]
-            # Again, format each element to two decimals:
-            text_str = "(" + ", ".join(f"{float(v):.2f}" for v in arr) + ")"  # <-- CHANGED
-            texts[n].set_text(text_str)
+        current_layer = int(layer_slider.val)
+        draw_graph(current_layer)
         fig.canvas.draw_idle()
-
+    
     layer_slider.on_changed(update)
-
-    # "Next" button to step layers.
+    
     button_ax = plt.axes([0.85, 0.025, 0.1, 0.04])
     next_button = Button(button_ax, 'Next')
-
+    
     def next_layer(event):
         current = int(layer_slider.val)
         new_val = (current + 1) % num_layers
         layer_slider.set_val(new_val)
     next_button.on_clicked(next_layer)
-
+    
     plt.show()
 
 # -----------------------------
-# Main script
+# Main script: auto-detect mode and GNN type from file path
 # -----------------------------
 def main():
-    # --- Load the trained model weights from file ---
-    file_path = "experiment_results/exp_simple_GCN_4cats_2hidden_20250307_120910.json"  
+    # Example file path; change this value as needed.
+    file_path = "experiment_results/exp_motif_GIN_0cats_2hidden_20250307_132121.json"
+    
+    # Automatically detect mode and GNN type from the file path.
+    mode = "motif" if "motif" in file_path.lower() else "simple"
+    gnn_type = "GIN" if "gin" in file_path.lower() else "GCN"
+    print("Detected mode:", mode)
+    print("Detected GNN type:", gnn_type)
+    
+    # Load experiment results and select the best model.
     data_json = load_experiment_results(file_path)
-    
-    # Choose the best model key from the JSON file.
     best_model_key = choose_best_model_key(data_json)
-    print("Selected best model:", best_model_key)
-    
-    # Extract the weight dictionary.
+    print("Selected best model key:", best_model_key)
     weight_dict = data_json["model summary"][best_model_key]
     
-    # --- Instantiate the GNN model using experiment configuration ---
+    # Get experiment configuration.
     exp_config = data_json["experiment_config"]
-    model = GNNModel(model_type=exp_config["model_type"],
-                     in_dim=exp_config["in_dim"],
+    # For motif mode, we assume constant node features (dim=1) and output is motif_dim.
+    if mode == "motif":
+        in_dim = exp_config.get("in_dim", 1)
+        out_dim = exp_config.get("motif_dim", 3)
+    else:
+        in_dim = exp_config["in_dim"]
+        out_dim = exp_config["num_categories"] + exp_config.get("motif_dim", 0)
+    
+    # Instantiate the model with the detected GNN type.
+    model = GNNModel(model_type=gnn_type,
+                     in_dim=in_dim,
                      hidden_dims=exp_config["hidden_dims"],
-                     out_dim=exp_config["num_categories"] + exp_config.get("motif_dim", 0),
+                     out_dim=out_dim,
                      freeze_final=True)
     
-    # Load the weights from the JSON file into the model.
+    # Load weights.
     assign_weights_from_dict(model, weight_dict)
     model.eval()
     
-    # --- Create a test graph ---
-    # vectors all 4 dimensional
-    vectors = ((0, 0, 0, 0),
-               (0, 0, 0, 0), 
-               (1, 0, 0, 0), 
-               (1, 0, 0, 0), 
-               (0, 0, 0, 0), 
-               (0, 0, 0, 0))
-
-    data, G, pos = linear_graph(vectors)
-
+    # Create a graph.
+    if mode == "motif":
+        # Use the SyntheticGraphDataGenerator for motif graphs.
+        generator = SyntheticGraphDataGenerator(
+            mode="motif",
+            num_categories=exp_config.get("num_categories", 3),
+            p=exp_config.get("p", 0.25),
+            num_nodes=exp_config.get("num_nodes", 20),
+            chain_length_min=exp_config.get("chain_length_min", 2),
+            chain_length_max=exp_config.get("chain_length_max", 7),
+            motif_dim=exp_config.get("motif_dim", 3)
+        )
+        data = generator.generate_single_graph()
+        # Convert the edge index to a NetworkX graph.
+        G = nx.Graph()
+        edge_index = data.edge_index.numpy()
+        edges = list(zip(edge_index[0], edge_index[1]))
+        G.add_edges_from(edges)
+        # Remove self-loops.
+        G.remove_edges_from(list(nx.selfloop_edges(G)))
+        # Use a spring layout as a default.
+        default_pos = nx.spring_layout(G, seed=42)
+    else:
+        # For simple mode, use a predefined linear graph.
+        vectors = ((0, 0, 0, 0),
+                   (0, 0, 0, 0), 
+                   (1, 0, 0, 0), 
+                   (1, 0, 0, 0), 
+                   (0, 0, 0, 0), 
+                   (0, 0, 0, 0))
+        data, G, default_pos = linear_graph(vectors)
     
-    # --- Compute hidden embeddings layer-by-layer using message passing ---
+    # Compute the hidden embeddings layer-by-layer.
     embeddings_by_layer = compute_hidden_embeddings(model, data)
     
-    # --- Animate the evolution of node embeddings ---
-    animate_graph(embeddings_by_layer, G, pos)
+    # Animate the evolution of node embeddings.
+    animate_graph(embeddings_by_layer, G, default_pos)
 
-main()
+if __name__ == "__main__":
+    main()

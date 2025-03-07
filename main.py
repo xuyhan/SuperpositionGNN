@@ -10,7 +10,7 @@ from ExperimentalPipeline import main
 # =============================================================================
 # Main Execution: Use Simple Mode Data for Training
 # =============================================================================
-if __name__ == '__main__(DELETE FOR SIMPLE)':
+if __name__ == '__main__(SIMPLE)':
     # Set device.
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
@@ -27,7 +27,7 @@ if __name__ == '__main__(DELETE FOR SIMPLE)':
     test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
     
     # Instantiate a GNN model. For the simple case, we use a GCN-based model.
-    model = GNNModel(model_type="GCN", in_dim=3, hidden_dims=[6,6,2], out_dim=3, freeze_final=True).to(device)
+    model = GNNModel(model_type="GCN", in_dim=3, hidden_dims=[3,3], out_dim=3, freeze_final=True).to(device)
     print("\nModel Architecture:")
     print(model)
     
@@ -64,7 +64,7 @@ if __name__ == '__main__(DELETE FOR SIMPLE)':
     # Use the keys from avg_predictions (which are pure target tuples) as the keys to plot.
     keys_to_plot = list(avg_embeddings.keys())
     print("\nVisualizing Average Predictions (as 3D Embeddings):")
-    Visualizer.plot_avg_hidden_embeddings_2d(avg_embeddings, colors, markers, keys_to_plot)
+    Visualizer.plot_avg_hidden_embeddings_3d(avg_embeddings, colors, markers, keys_to_plot)
 
 
 if __name__ == '__main__':
