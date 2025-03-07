@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 vectors = {
-    "(0, 0, 1)": [2.19, 13.2],
-    "(1, 0, 0)": [-17.0,-1.0],
-    "(0, 1, 0)": [2.42,-13.3]
+    "(0, 0, 1)": [-20, 12.5],
+    "(1, 0, 0)": [8.7,-0.84],
+    "(0, 1, 0)": [-29.0,-39.1]
 }
 
 def plot_vectors(vectors):

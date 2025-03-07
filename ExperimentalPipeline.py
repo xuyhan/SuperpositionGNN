@@ -25,26 +25,26 @@ def convert_keys_to_str(obj):
 def main():
     # Define the experiment configuration.
     experiment_config = {
-        "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 4,        # REQUIRED motif does not contibute to the number of categories
+        "mode": "motif",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
+        "num_categories": 0,        # REQUIRED motif does not contibute to the number of categories
         "p": 0.2,
         "num_nodes": 20,
-        "motif_dim": 0,             # 0 for simple experiments (no motif features)
+        "motif_dim": 3,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
-        "batch_size": 16,
-        "in_dim": 4,
-        "hidden_dims": [4, 4, 2],      # REQUIRED: List of hidden layer dimensions
+        "batch_size": 4,
+        "in_dim": 1,
+        "hidden_dims": [2, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 5,
-        "phase2_epochs": 8,
+        "phase2_epochs": 10,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
         "save": True
     }
     
@@ -58,7 +58,7 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=4)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=30)
     print(f"Results: {results}")
     
     # Perform geometry analysis on the results.
