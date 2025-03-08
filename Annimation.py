@@ -199,7 +199,8 @@ def main():
                      in_dim=in_dim,
                      hidden_dims=exp_config["hidden_dims"],
                      out_dim=out_dim,
-                     freeze_final=True)
+                     freeze_final=True,
+                     pooling=exp_config["pooling"])
     
     # Load weights.
     assign_weights_from_dict(model, weight_dict)

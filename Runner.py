@@ -36,13 +36,16 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         motif_dim = experiment_config.get("motif_dim", 0)
         # For a "simple" experiment, output dimension = num_categories + motif_dim (here motif_dim is 0)
         out_dim = experiment_config.get("num_categories", 3) + motif_dim
+        # Pooling
+        pooling = experiment_config.get("pooling", "mean")
         
         model = GNNModel(
             model_type=experiment_config.get("model_type", "GCN"),
             in_dim=in_dim,
             hidden_dims=hidden_dims,
             out_dim=out_dim,
-            freeze_final=True
+            freeze_final=True,
+            pooling=pooling
         ).to(experiment_config["device"])
         
         optimizer = optim.Adam(model.parameters(), lr=experiment_config.get("lr", 0.01))

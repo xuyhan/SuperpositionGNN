@@ -34,8 +34,8 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 10,        # REQUIRED motif does not contibute to the number of categories
-        "p": 0.5,
+        "num_categories": 15,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.7,
         "num_nodes": 20,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
@@ -43,8 +43,8 @@ def main():
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 16,
-        "in_dim": 10,
-        "hidden_dims": [7, 7],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 15,
+        "hidden_dims": [20, 8],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -53,7 +53,8 @@ def main():
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
-        "save": True
+        "pooling": "mean",
+        "save": False
     }
     
     # Check for required keys.

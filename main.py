@@ -27,7 +27,7 @@ if __name__ == '__main__(SIMPLE)':
     test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
     
     # Instantiate a GNN model. For the simple case, we use a GCN-based model.
-    model = GNNModel(model_type="GCN", in_dim=3, hidden_dims=[3,3], out_dim=3, freeze_final=True).to(device)
+    model = GNNModel(model_type="GCN", in_dim=3, hidden_dims=[3,3], out_dim=3, freeze_final=True, pooling="mean").to(device)
     print("\nModel Architecture:")
     print(model)
     

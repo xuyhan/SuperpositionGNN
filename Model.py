@@ -2,7 +2,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, GINConv, global_mean_pool
+from torch_geometric.nn import GCNConv, GINConv, global_mean_pool, global_max_pool
 
 # ----------------------------
 # Helper functions for final layer initialization
@@ -85,7 +85,7 @@ def initialize_output_weights(W, out_dim, hidden_dim):
 # Unified GNN Model Class
 # ----------------------------
 class GNNModel(nn.Module):
-    def __init__(self, model_type="GCN", in_dim=3, hidden_dims=[3, 3], out_dim=3, freeze_final=True):
+    def __init__(self, model_type="GCN", in_dim=3, hidden_dims=[3, 3], out_dim=3, freeze_final=True, pooling="mean"):
         """
         Constructs a flexible GNN model.
         
@@ -98,6 +98,7 @@ class GNNModel(nn.Module):
         """
         super(GNNModel, self).__init__()
         self.model_type = model_type
+        self.pooling = pooling
 
         if self.model_type == "GCN":
             self.convs = nn.ModuleList()
@@ -137,27 +138,37 @@ class GNNModel(nn.Module):
 
     def forward(self, x, edge_index, batch):
         """
-        Forward pass: Applies the convolutional layers, then global mean pooling,
-        then the final linear layer to produce raw logits.
+        Forward pass: Applies convolutional layers, then the specified global pooling,
+        then the final linear layer to produce logits.
         """
         for i, conv in enumerate(self.convs):
             x = conv(x, edge_index)
             if i < len(self.convs) - 1:
                 x = F.relu(x)
-        graph_repr = global_mean_pool(x, batch)
+        # Choose pooling based on the model parameter.
+        if self.pooling == "mean":
+            graph_repr = global_mean_pool(x, batch)
+        elif self.pooling == "max":
+            graph_repr = global_max_pool(x, batch)
+        else:
+            raise ValueError(f"Unsupported pooling type: {self.pooling}")
         logits = self.lin_out(graph_repr)
         return logits
 
     def get_graph_repr(self, x, edge_index, batch):
         """
-        Returns the graph-level representation (after global pooling).
-        Useful for analysis and visualization.
+        Returns the graph-level representation after pooling.
         """
         for i, conv in enumerate(self.convs):
             x = conv(x, edge_index)
             if i < len(self.convs) - 1:
                 x = F.relu(x)
-        return global_mean_pool(x, batch)
+        if self.pooling == "mean":
+            return global_mean_pool(x, batch)
+        elif self.pooling == "max":
+            return global_max_pool(x, batch)
+        else:
+            raise ValueError(f"Unsupported pooling type: {self.pooling}")
 
     def get_hidden_embeddings(self, x, edge_index, batch):
         """
