@@ -53,8 +53,8 @@ def main():
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
-        "pooling": "mean",
-        "save": False
+        "pooling": "max",
+        "save": True
     }
     
     # Check for required keys.
@@ -119,9 +119,9 @@ def main():
         "experiment_config": experiment_config,
         "sparcity": sparcity,
         "summary": summary,
-        "model summary": model_summary,
-        "average embeddings summary": average_embeddings_summary,
         "results": readable_results,
+        "average embeddings summary": average_embeddings_summary,
+        "model summary": model_summary
     }
     
     # Convert keys/objects to strings as necessary.
