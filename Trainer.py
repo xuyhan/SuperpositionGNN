@@ -209,7 +209,7 @@ class Trainer:
         the geometry of the representation, and whether the representation is collapsed).
         '''
         num_active_targets, avg_embeddings_active, num_accurate_targets = Trainer.active_targets_in_representation(target_dim, avg_predictions, avg_embeddings)
-        geometry, collapsed = Trainer.geometry_of_representation(num_active_targets, avg_embeddings_active)
+        geometry, collapsed = Trainer.geometry_of_representation(avg_embeddings_active)
         if geometry > 0:
             category_with_loss = [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss]
             print(f"Category_with_loss: [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss] = {category_with_loss}")
@@ -252,3 +252,32 @@ class Trainer:
             average_embeddings_summary[type] = average_embeddings[type][0]
         return summary, model_summary, average_embeddings_summary
     
+    @staticmethod
+    def svd_analysis(embeddings):
+        """
+        Analyzes a set of average embeddings.
+
+        Returns:
+            tuple: A tuple containing:
+                - rank (int): The rank of the embeddings matrix.
+                - singular_values (np.ndarray): The singular values from the SVD of the matrix.
+        """
+        import numpy as np
+
+        # Convert dictionary or list to a NumPy array.
+        if isinstance(embeddings, dict):
+            embeddings = np.array(list(embeddings.values()))
+        elif isinstance(embeddings, list):
+            embeddings = np.array(embeddings)
+    
+        # Ensure embeddings is a 2D array (if it's a single vector, reshape it).
+        if embeddings.ndim == 1:
+            embeddings = embeddings.reshape(1, -1)
+    
+        # Compute the rank of the embeddings matrix.
+        rank = np.linalg.matrix_rank(embeddings)
+    
+        # Perform Singular Value Decomposition (SVD)
+        U, singular_values, Vt = np.linalg.svd(embeddings, full_matrices=False)
+    
+        return rank, singular_values

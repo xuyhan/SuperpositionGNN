@@ -5,16 +5,24 @@ from datetime import datetime
 from Runner import run_multiple_experiments
 from Trainer import Trainer
 from GraphGeneration import sparcity_calculator
+import numpy as np
 
 def convert_keys_to_str(obj):
     """
     Recursively convert dictionary keys to strings and convert
-    non-serializable objects (like torch.device and torch.Tensor) to strings or lists.
+    non-serializable objects (like torch.device, torch.Tensor, and NumPy types)
+    to serializable types.
     """
     if isinstance(obj, dict):
         return {str(k): convert_keys_to_str(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [convert_keys_to_str(item) for item in obj]
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.integer, np.int64)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64)):
+        return float(obj)
     elif isinstance(obj, torch.device):
         return str(obj)
     elif isinstance(obj, torch.Tensor):
@@ -25,26 +33,26 @@ def convert_keys_to_str(obj):
 def main():
     # Define the experiment configuration.
     experiment_config = {
-        "mode": "motif",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 0,        # REQUIRED motif does not contibute to the number of categories
-        "p": 0.2,
+        "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
+        "num_categories": 6,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.4,
         "num_nodes": 20,
-        "motif_dim": 3,             # 0 for simple experiments (no motif features)
+        "motif_dim": 0,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
-        "batch_size": 4,
-        "in_dim": 1,
-        "hidden_dims": [2, 2],      # REQUIRED: List of hidden layer dimensions
+        "batch_size": 16,
+        "in_dim": 6,
+        "hidden_dims": [8, 8],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
-        "phase1_epochs": 5,
-        "phase2_epochs": 10,
+        "phase1_epochs": 7,
+        "phase2_epochs": 12,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
         "save": True
     }
     
@@ -58,8 +66,31 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=5)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=2)
     print(f"Results: {results}")
+
+    # Make results more readable and add SVD results for each experiment
+    readable_results = []
+    # Expected keys for each result entry.
+    keys = [
+        "Num of features",         # index 0 in original list
+        "Num of active features",  # index 1
+        "Num of accurate feature", # index 2
+        "Geometry",                # index 3
+        "Collapsed",               # index 4
+        "Loss"                     # index 5
+    ]
+
+    # Loop over each experiment result and corresponding embeddings.
+    for result_entry, embedding in zip(results, all_average_embeddings):
+        # Compute SVD analysis for the given embeddings.
+        rank, singular_values = Trainer.svd_analysis(embedding)
+        # Build a dictionary from the result_entry.
+        entry_dict = { key: result_entry[i] for i, key in enumerate(keys) }
+        # Add SVD analysis results.
+        entry_dict["Rank"] = rank
+        entry_dict["Singular values"] = singular_values.tolist()  # convert to list for JSON serialization
+        readable_results.append(entry_dict)
     
     # Perform geometry analysis on the results.
     config_losses, model_params, average_embeddings = Trainer.geometry_analysis(results, all_model_params, all_average_embeddings)
@@ -89,7 +120,7 @@ def main():
         "summary": summary,
         "model summary": model_summary,
         "average embeddings summary": average_embeddings_summary,
-        "results": results,
+        "results": readable_results,
     }
     
     # Convert keys/objects to strings as necessary.
