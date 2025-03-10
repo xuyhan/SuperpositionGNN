@@ -28,12 +28,13 @@ def load_experiment_results(file_path):
 def choose_best_model_key(data):
     """
     Chooses the best model key from the summary (lowest average loss).
-    Assumes data["summary"] maps a key string to [avg_loss, std_loss].
+    Assumes data["summary"] maps a key string to a list where the first element is avg_loss.
     """
     summary = data["summary"]
     best_key = None
     best_loss = float('inf')
-    for k, (avg_loss, _) in summary.items():
+    for k, v in summary.items():
+        avg_loss = v[0]  # take the first element as the average loss
         if avg_loss < best_loss:
             best_loss = avg_loss
             best_key = k
@@ -170,10 +171,11 @@ def animate_graph(embeddings_by_layer, G, default_pos):
 # -----------------------------
 def main():
     # Example file path; change this value as needed.
-    file_path = "experiment_results/exp_motif_GIN_0cats_2hidden_20250307_132121.json"
+    file_path = "experiment_results/exp_count_GCN_3cats_2hidden_20250310_111122.json"
     
     # Automatically detect mode and GNN type from the file path.
-    mode = "motif" if "motif" in file_path.lower() else "simple"
+    mode = "motif" if "motif" in file_path.lower() else ("count" if "count" in file_path.lower() else 
+                    ("simple" if "simple" in file_path.lower() else "unknown"))
     gnn_type = "GIN" if "gin" in file_path.lower() else "GCN"
     print("Detected mode:", mode)
     print("Detected GNN type:", gnn_type)
@@ -190,9 +192,12 @@ def main():
     if mode == "motif":
         in_dim = exp_config.get("in_dim", 1)
         out_dim = exp_config.get("motif_dim", 3)
-    else:
+    elif mode == "simple":
         in_dim = exp_config["in_dim"]
-        out_dim = exp_config["num_categories"] + exp_config.get("motif_dim", 0)
+        out_dim = exp_config["num_categories"] 
+    elif mode == "count":
+        in_dim = exp_config.get("in_dim", 1)
+        out_dim = exp_config.get("num_categories", 3)
     
     # Instantiate the model with the detected GNN type.
     model = GNNModel(model_type=gnn_type,
@@ -228,7 +233,7 @@ def main():
         G.remove_edges_from(list(nx.selfloop_edges(G)))
         # Use a spring layout as a default.
         default_pos = nx.spring_layout(G, seed=42)
-    else:
+    elif mode == "simple":
         # For simple mode, use a predefined linear graph.
         vectors = ((0, 0, 0, 0),
                    (0, 0, 0, 0), 
@@ -237,6 +242,23 @@ def main():
                    (0, 0, 0, 0), 
                    (0, 0, 0, 0))
         data, G, default_pos = linear_graph(vectors)
+    elif mode == "count":
+        # Use the SyntheticGraphDataGenerator for count graphs.
+        generator = SyntheticGraphDataGenerator(
+            mode="count",
+            num_nodes=exp_config.get("num_nodes", 20),
+            p_count=exp_config.get("p_count", 0.9)
+        )
+        data = generator.generate_single_graph()
+        # Convert the edge index to a NetworkX graph.
+        G = nx.Graph()
+        edge_index = data.edge_index.numpy()
+        edges = list(zip(edge_index[0], edge_index[1]))
+        G.add_edges_from(edges)
+        # Remove self-loops.
+        G.remove_edges_from(list(nx.selfloop_edges(G)))
+        # Use a spring layout as a default.
+        default_pos = nx.spring_layout(G, seed=42)
     
     # Compute the hidden embeddings layer-by-layer.
     embeddings_by_layer = compute_hidden_embeddings(model, data)
