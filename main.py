@@ -7,6 +7,10 @@ from torch_geometric.data import DataLoader
 from Runner import run_multiple_experiments
 from ExperimentalPipeline import main
 
+if __name__ == '__main__':
+    main()
+
+
 # =============================================================================
 # Main Execution: Use Simple Mode Data for Training
 # =============================================================================
@@ -65,10 +69,6 @@ if __name__ == '__main__(SIMPLE)':
     keys_to_plot = list(avg_embeddings.keys())
     print("\nVisualizing Average Predictions (as 3D Embeddings):")
     Visualizer.plot_avg_hidden_embeddings_3d(avg_embeddings, colors, markers, keys_to_plot)
-
-
-if __name__ == '__main__':
-    main()
 
 
 if __name__ == '__main__(DELETE FOR MULTIPLE RUNS)':

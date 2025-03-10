@@ -33,27 +33,28 @@ def convert_keys_to_str(obj):
 def main():
     # Define the experiment configuration.
     experiment_config = {
-        "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 15,        # REQUIRED motif does not contibute to the number of categories
+        "mode": "count",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
+        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
         "p": 0.7,
-        "num_nodes": 20,
+        "p_count": 0.9,             # Probability for edges in count mode
+        "num_nodes": 10,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 16,
-        "in_dim": 15,
-        "hidden_dims": [20, 8],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 2,
+        "hidden_dims": [2, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 0,
-        "phase2_epochs": 60,
+        "phase2_epochs": 20,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
-        "pooling": "max",
+        "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "pooling": "mean",
         "save": True
     }
     
@@ -118,6 +119,7 @@ def main():
     output = {
         "experiment_config": experiment_config,
         "sparcity": sparcity,
+        "summary format:": "Key: (Num of active features, Num of accurate feature, Geometry, Collapsed). Loss, s.d. Loss, Count",
         "summary": summary,
         "results": readable_results,
         "average embeddings summary": average_embeddings_summary,

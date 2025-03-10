@@ -4,7 +4,7 @@ import math
 from torch_geometric.data import Data
 
 class SyntheticGraphDataGenerator:
-    def __init__(self, mode="simple", num_categories=3, p=0.25, num_nodes=20,
+    def __init__(self, mode="simple", num_categories=3, p=0.25, p_count = 0.9, num_nodes=20,
                  chain_length_min=2, chain_length_max=7, motif_dim=3,
                  candidate_matrices=None, base_distribution=None):
         """
@@ -24,6 +24,7 @@ class SyntheticGraphDataGenerator:
         self.mode = mode
         self.num_categories = num_categories
         self.p = p
+        self.p_count = p_count
         self.num_nodes = num_nodes
         self.chain_length_min = chain_length_min
         self.chain_length_max = chain_length_max
@@ -206,6 +207,33 @@ class SyntheticGraphDataGenerator:
         return edge_index, total_nodes, label
 
     # ------------------------------
+    # Functions for count graphs
+    # ------------------------------
+
+    def create_count_edge_index(self, num_nodes, p_count):
+        """Creates an edge index for a graph with random edges."""
+        edges = []
+        for i in range(num_nodes):
+            edges.append((i, i))
+            for j in range(i + 1, num_nodes):
+                if random.random() < p_count:
+                    edges.append((i, j))
+                    edges.append((j, i))
+
+        edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
+        return edge_index
+
+    def compute_feature_vector_count(self, node_embs):
+        """ Computes the feature vector for the count mode. """
+        if torch.sum(node_embs[:, 0]) > torch.sum(node_embs[:, 1]):
+            return torch.tensor([1, 0, 0], dtype=torch.float)
+        elif torch.sum(node_embs[:, 0]) < torch.sum(node_embs[:, 1]):
+            return torch.tensor([0, 1, 0], dtype=torch.float)
+        else:
+            return torch.tensor([0, 0, 1], dtype=torch.float)
+
+
+    # ------------------------------
     # Single graph generation method (dispatch based on mode)
     # ------------------------------
 
@@ -258,6 +286,17 @@ class SyntheticGraphDataGenerator:
             y = torch.cat([feature_y, motif_y], dim=0)
             data = Data(x=x, edge_index=edge_index, y=y)
             data.num_nodes = total_nodes
+            return data
+        
+        elif self.mode == "count":
+            # Graphs with random edges, random color ((1,0) vs (0,1))
+            num_nodes = self.num_nodes
+            p_count = self.p_count
+            edge_index = self.create_count_edge_index(num_nodes, p_count)
+            x = self.assign_node_embeddings(num_nodes, 2, p = 1.0)
+            y = self.compute_feature_vector_count(x)
+            data = Data(x=x, edge_index=edge_index, y=y)
+            data.num_nodes = num_nodes
             return data
 
         else:

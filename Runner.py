@@ -17,6 +17,7 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
             mode=experiment_config.get("mode", "simple"),
             num_categories=experiment_config.get("num_categories", 3),
             p=experiment_config.get("p", 0.25),
+            p_count=experiment_config.get("p_count", 0.9),  # Probability for edges in count mode
             num_nodes=experiment_config.get("num_nodes", 20),
             motif_dim=experiment_config.get("motif_dim", 0),  # 0 for simple mode
             chain_length_min=experiment_config.get("chain_length_min", 2),
