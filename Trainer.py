@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.tensorboard import SummaryWriter
 import math
 import itertools
 
@@ -32,6 +33,15 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.config = config if config is not None else {}
+
+        # Initialize the SummaryWriter with a common log directory.
+        log_dir = self.config.get("log_dir", None)
+        if log_dir:
+            # Do not create subdirectories—use common log directory.
+            self.writer = SummaryWriter(log_dir=log_dir)
+            print(f"TensorBoard logs will be saved to the common directory: {log_dir}")
+        else:
+            self.writer = None
 
     def train_one_epoch(self):
         self.model.train()
@@ -69,10 +79,16 @@ class Trainer:
             total_loss += mean_loss.item()
         return total_loss / len(self.train_loader)
 
-    def train(self, num_epochs):
+    def train(self, num_epochs, experiment_number=1):
         for epoch in range(1, num_epochs + 1):
             epoch_loss = self.train_one_epoch()
-            print(f"Epoch {epoch}/{num_epochs} - Loss: {epoch_loss:.4f}")
+            print(f"Epoch {epoch}/{num_epochs}, Loss: {epoch_loss:.4f}")
+            _, avg_accuracy, _, _, _ = self.evaluate()
+            if self.writer:
+                # Log epoch loss for multiple experiments under the same main tag "Eval/Epoch_Loss"
+                self.writer.add_scalars("Eval/Epoch_Loss", {f"exp_{experiment_number}": epoch_loss}, epoch)
+                # Log accuracy for multiple experiments under the same main tag "Eval/Accuracy"
+                self.writer.add_scalars("Eval/Accuracy", {f"exp_{experiment_number}": avg_accuracy}, epoch)
 
     @staticmethod
     def is_pure_graph(target_vec):
@@ -117,20 +133,20 @@ class Trainer:
 
         avg_loss = total_loss / total_samples
         avg_accuracy = total_correct / total_samples
-        print(f"Overall Loss: {avg_loss:.4f}, Accuracy (exact match): {avg_accuracy*100:.2f}%")
-        print("\n=== Average Predictions (Pure Graphs) ===")
+        #print(f"Overall Loss: {avg_loss:.4f}, Accuracy (exact match): {avg_accuracy*100:.2f}%")
+        #print("\n=== Average Predictions (Pure Graphs) ===")
         avg_predictions = {}
         for k, preds in preds_dict.items():
             preds_tensor = torch.stack(preds)
             avg_pred = preds_tensor.float().mean(dim=0)
             avg_predictions[k] = avg_pred
-            print(f"Target {k} => Average Prediction: {avg_pred.tolist()}")
-        print("\n=== Average Hidden Embeddings (Pure Graphs) ===")
+            #print(f"Target {k} => Average Prediction: {avg_pred.tolist()}")
+        #print("\n=== Average Hidden Embeddings (Pure Graphs) ===")
         avg_embeddings = {}
         for k, reps in graph_repr_dict.items():
             avg_repr = torch.stack(reps).mean(dim=0)
             avg_embeddings[k] = avg_repr
-            print(f"Target {k} => Average Hidden Embedding: {avg_repr.tolist()}")
+            #print(f"Target {k} => Average Hidden Embedding: {avg_repr.tolist()}")
         return avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions
 
     # --- Geometric Analysis Functions ---

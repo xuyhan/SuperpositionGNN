@@ -11,6 +11,7 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
     all_average_embeddings = []
     for i in range(num_experiments):
         print(f"\nRunning experiment {i+1}/{num_experiments}...")
+        experiment_number = i + 1
         
         # Create data generator based on experiment type (mode)
         generator = SyntheticGraphDataGenerator(
@@ -24,8 +25,8 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
             chain_length_max=experiment_config.get("chain_length_max", 7),
             candidate_matrices=experiment_config.get("candidate_matrices", None)
         )
-        train_data = generator.generate_data(num_samples=experiment_config.get("num_train_samples", 10000))
-        test_data = generator.generate_data(num_samples=experiment_config.get("num_test_samples", 3000))
+        train_data = generator.generate_data(num_samples=experiment_config.get("num_train_samples", 5000))
+        test_data = generator.generate_data(num_samples=experiment_config.get("num_test_samples", 2000))
         
         # Create DataLoaders
         train_loader = DataLoader(train_data, batch_size=experiment_config.get("batch_size", 4), shuffle=True)
@@ -60,12 +61,13 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
             "importance": experiment_config.get("importance", (15.0, 10.0)),
             "num_epochs": experiment_config.get("num_epochs", 5),
             "phase1_epochs": experiment_config.get("phase1_epochs", 5),
-            "phase2_epochs": experiment_config.get("phase2_epochs", 10)
+            "phase2_epochs": experiment_config.get("phase2_epochs", 10),
+            "log_dir": experiment_config.get("log_dir", None)
         }
         
         # Create Trainer instance and train the model.
         trainer = Trainer(model, train_loader, test_loader, optimizer, criterion, experiment_config["device"], trainer_config)
-        trainer.train(num_epochs=trainer_config["phase1_epochs"])
+        trainer.train(num_epochs=trainer_config["phase1_epochs"], experiment_number=experiment_number)
         
         # Phase 2: Unfreeze final layer and continue training.
         model.lin_out.weight.requires_grad = True
@@ -75,14 +77,14 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         # Reinitialize optimizer with updated parameters.
         optimizer = optim.Adam(model.parameters(), lr=experiment_config.get("lr", 0.01))
         trainer.optimizer = optimizer  # Update the trainer's optimizer.
-        trainer.train(num_epochs=trainer_config["phase2_epochs"])
+        trainer.train(num_epochs=trainer_config["phase2_epochs"], experiment_number=experiment_number)
 
         # Extract model parameters for analysis
         model_params = extract_model_parameters(model)
         all_model_params.append(model_params)
 
         # Evaluate the model using the Trainer instance
-        avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions = trainer.evaluate()
+        avg_loss, __, __, avg_embeddings, avg_predictions = trainer.evaluate()
         total_target_dim = experiment_config.get("num_categories", 3) + motif_dim
         result = trainer.structure_of_representation(total_target_dim, avg_predictions, avg_embeddings, avg_loss)
         results.append(result)
