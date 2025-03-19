@@ -34,8 +34,8 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 10,        # REQUIRED motif does not contibute to the number of categories
-        "p": 0.5,
+        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.3,
         "p_count": 0.9,             # Probability for edges in count mode
         "num_nodes": 20,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
@@ -44,8 +44,8 @@ def main():
         "num_train_samples": 10000,
         "num_test_samples": 3000,
         "batch_size": 16,
-        "in_dim": 10,
-        "hidden_dims": [12, 6],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 3,
+        "hidden_dims": [3, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -69,7 +69,7 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=10)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=2)
     print(f"Results: {results}")
 
     # Make results more readable and add SVD results for each experiment

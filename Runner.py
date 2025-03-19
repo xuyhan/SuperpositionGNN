@@ -4,6 +4,16 @@ from torch_geometric.data import DataLoader
 from GraphGeneration import SyntheticGraphDataGenerator
 from Model import *
 from Trainer import Trainer  # Trainer now includes geometry_analysis, etc.
+from Writer import get_writer
+
+# Define a wrapper for your GNN model.
+class ModelWrapper(torch.nn.Module):
+    def __init__(self, gnn_model):
+        super(ModelWrapper, self).__init__()
+        self.gnn_model = gnn_model
+
+    def forward(self, x, edge_index, batch):
+        return self.gnn_model(x, edge_index, batch)
 
 def run_multiple_experiments(experiment_config, num_experiments=10):
     results = []
@@ -38,7 +48,6 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         motif_dim = experiment_config.get("motif_dim", 0)
         # For a "simple" experiment, output dimension = num_categories + motif_dim (here motif_dim is 0)
         out_dim = experiment_config.get("num_categories", 3) + motif_dim
-        # Pooling
         pooling = experiment_config.get("pooling", "mean")
         
         model = GNNModel(
@@ -52,6 +61,13 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         
         optimizer = optim.Adam(model.parameters(), lr=experiment_config.get("lr", 0.01))
         criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
+
+        # Save the model as a graph to visualize in TensorBoard.
+        writer = get_writer(experiment_config.get("log_dir", None))
+        # Create a wrapper around your model so that TensorBoard can trace its forward pass.
+        wrapped_model = ModelWrapper(model)
+        batch_data = next(iter(train_loader))
+        writer.add_graph(wrapped_model, (batch_data.x, batch_data.edge_index, batch_data.batch))
         
         # Trainer configuration
         trainer_config = {
@@ -79,11 +95,11 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         trainer.optimizer = optimizer  # Update the trainer's optimizer.
         trainer.train(num_epochs=trainer_config["phase2_epochs"], experiment_number=experiment_number)
 
-        # Extract model parameters for analysis
+        # Extract model parameters for analysis.
         model_params = extract_model_parameters(model)
         all_model_params.append(model_params)
 
-        # Evaluate the model using the Trainer instance
+        # Evaluate the model using the Trainer instance.
         avg_loss, __, __, avg_embeddings, avg_predictions = trainer.evaluate()
         total_target_dim = experiment_config.get("num_categories", 3) + motif_dim
         result = trainer.structure_of_representation(total_target_dim, avg_predictions, avg_embeddings, avg_loss)

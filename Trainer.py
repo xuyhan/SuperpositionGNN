@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 import math
 import itertools
+from Writer import get_writer
 
 class Trainer:
     def __init__(self, model, train_loader, test_loader, optimizer, criterion, device, config=None):
@@ -37,8 +38,7 @@ class Trainer:
         # Initialize the SummaryWriter with a common log directory.
         log_dir = self.config.get("log_dir", None)
         if log_dir:
-            # Do not create subdirectories—use common log directory.
-            self.writer = SummaryWriter(log_dir=log_dir)
+            self.writer = get_writer(log_dir)
             print(f"TensorBoard logs will be saved to the common directory: {log_dir}")
         else:
             self.writer = None

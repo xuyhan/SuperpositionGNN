@@ -1,0 +1,148 @@
+{
+    "experiment_config": {
+        "mode": "simple",
+        "num_categories": 3,
+        "p": 0.3,
+        "p_count": 0.9,
+        "num_nodes": 20,
+        "motif_dim": 0,
+        "chain_length_min": 2,
+        "chain_length_max": 7,
+        "num_train_samples": 10000,
+        "num_test_samples": 3000,
+        "batch_size": 16,
+        "in_dim": 3,
+        "hidden_dims": [
+            3,
+            2
+        ],
+        "lr": 0.01,
+        "use_weighting": true,
+        "importance": [
+            15.0,
+            10.0
+        ],
+        "phase1_epochs": 0,
+        "phase2_epochs": 50,
+        "num_epochs": 5,
+        "device": "cpu",
+        "model_type": "GCN",
+        "pooling": "mean",
+        "log_dir": "runs/simple/10",
+        "save": true
+    },
+    "sparcity": 0.8388257568844947,
+    "summary format:": "Key: (Num of active features, Num of accurate feature, Geometry, Collapsed). Loss, s.d. Loss, Count",
+    "summary": {
+        "(3, 3, 'Failed', 0)": [
+            0.40507916327317556,
+            0.0007025792201360015,
+            2
+        ]
+    },
+    "results": [
+        {
+            "Num of features": 3,
+            "Num of active features": 3,
+            "Num of accurate feature": 3,
+            "Geometry": "Failed",
+            "Collapsed": 0,
+            "Loss": 0.40578174249331156,
+            "Rank": 2,
+            "Singular values": [
+                1.5983537435531616,
+                0.9554265141487122
+            ]
+        },
+        {
+            "Num of features": 3,
+            "Num of active features": 3,
+            "Num of accurate feature": 3,
+            "Geometry": "Failed",
+            "Collapsed": 0,
+            "Loss": 0.40437658405303956,
+            "Rank": 2,
+            "Singular values": [
+                1.4354335069656372,
+                0.8762810826301575
+            ]
+        }
+    ],
+    "average embeddings summary": {
+        "(3, 3, 'Failed', 0)": {
+            "(0, 1, 0)": [
+                -0.43902623653411865,
+                -0.4264630973339081
+            ],
+            "(1, 0, 0)": [
+                0.7034155130386353,
+                0.45814186334609985
+            ],
+            "(0, 0, 1)": [
+                0.5090748071670532,
+                -1.4591487646102905
+            ]
+        }
+    },
+    "model summary": {
+        "(3, 3, 'Failed', 0)": {
+            "convs.0.bias": [
+                -2.4607155323028564,
+                0.584811270236969,
+                0.0
+            ],
+            "convs.0.lin.weight": [
+                [
+                    5.088192462921143,
+                    -0.34025320410728455,
+                    -0.0216037817299366
+                ],
+                [
+                    -0.2891019284725189,
+                    -2.907592296600342,
+                    3.792022466659546
+                ],
+                [
+                    -0.5436427593231201,
+                    -0.04436182975769043,
+                    -0.9818755388259888
+                ]
+            ],
+            "convs.1.bias": [
+                -1.6348687410354614,
+                0.7612569332122803
+            ],
+            "convs.1.lin.weight": [
+                [
+                    7.690938472747803,
+                    1.8845627307891846,
+                    -0.9025740623474121
+                ],
+                [
+                    8.254596710205078,
+                    -2.0602660179138184,
+                    0.07108085602521896
+                ]
+            ],
+            "lin_out.weight": [
+                [
+                    8.787132263183594,
+                    7.6285247802734375
+                ],
+                [
+                    -2.2034103870391846,
+                    0.10821668803691864
+                ],
+                [
+                    1.4051473140716553,
+                    -2.4076435565948486
+                ]
+            ],
+            "lin_out.bias": [
+                -1.4573395252227783,
+                -0.33602645993232727,
+                -2.5699148178100586
+            ]
+        }
+    }
+}
