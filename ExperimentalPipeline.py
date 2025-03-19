@@ -34,28 +34,28 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
+        "num_categories": 5,        # REQUIRED motif does not contibute to the number of categories
         "p": 0.3,
         "p_count": 0.9,             # Probability for edges in count mode
         "num_nodes": 20,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
-        "num_train_samples": 10000,
-        "num_test_samples": 3000,
+        "num_train_samples": 5000,
+        "num_test_samples": 1500,
         "batch_size": 16,
-        "in_dim": 3,
-        "hidden_dims": [3, 2],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 5,
+        "hidden_dims": [5, 2],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 0,
-        "phase2_epochs": 50,
+        "phase2_epochs": 30,
         "num_epochs": 5,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
-        "pooling": "mean",
-        "log_dir": "runs/simple/10",
+        "pooling": "max",
+        "log_dir": "runs/simple/max/5",
         "save": True
     }
     
@@ -69,7 +69,7 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=2)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=200)
     print(f"Results: {results}")
 
     # Make results more readable and add SVD results for each experiment
