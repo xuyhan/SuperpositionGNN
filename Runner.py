@@ -67,7 +67,8 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         # Create a wrapper around your model so that TensorBoard can trace its forward pass.
         wrapped_model = ModelWrapper(model)
         batch_data = next(iter(train_loader))
-        writer.add_graph(wrapped_model, (batch_data.x, batch_data.edge_index, batch_data.batch))
+        if experiment_config.get("add_graph", False) == True:
+            writer.add_graph(wrapped_model, (batch_data.x, batch_data.edge_index, batch_data.batch))
         
         # Trainer configuration
         trainer_config = {
@@ -78,7 +79,8 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
             "num_epochs": experiment_config.get("num_epochs", 5),
             "phase1_epochs": experiment_config.get("phase1_epochs", 5),
             "phase2_epochs": experiment_config.get("phase2_epochs", 10),
-            "log_dir": experiment_config.get("log_dir", None)
+            "log_dir": experiment_config.get("log_dir", None),
+            "track_embeddings": experiment_config.get("track_embeddings", False),
         }
         
         # Create Trainer instance and train the model.

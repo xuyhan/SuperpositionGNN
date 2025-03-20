@@ -34,8 +34,8 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 12,        # REQUIRED motif does not contibute to the number of categories
-        "p": 0.8,
+        "num_categories": 4,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.3,
         "p_count": 0.9,             # Probability for edges in count mode
         "num_nodes": 20,
         "motif_dim": 0,             # 0 for simple experiments (no motif features)
@@ -44,8 +44,8 @@ def main():
         "num_train_samples": 5000,
         "num_test_samples": 1500,
         "batch_size": 16,
-        "in_dim": 12,
-        "hidden_dims": [12, 6],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 4,
+        "hidden_dims": [4, 3],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -55,8 +55,10 @@ def main():
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
         "pooling": "mean",
-        "log_dir": "runs/simple/mean/12",
-        "save": True
+        "log_dir": "runs/simple_embedding/mean/4",
+        "add_graph": False,
+        "track_embeddings": False,  # In TensorBoard, track the embeddings of the last layer.
+        "save": False
     }
     
     # Check for required keys.
@@ -69,7 +71,7 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=100)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=1)
     print(f"Results: {results}")
 
     # Make results more readable and add SVD results for each experiment

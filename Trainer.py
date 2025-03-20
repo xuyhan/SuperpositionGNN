@@ -83,12 +83,22 @@ class Trainer:
         for epoch in range(1, num_epochs + 1):
             epoch_loss = self.train_one_epoch()
             print(f"Epoch {epoch}/{num_epochs}, Loss: {epoch_loss:.4f}")
-            _, avg_accuracy, _, _, _ = self.evaluate()
+            _, avg_accuracy, _, avg_embeddings, _ = self.evaluate()
             if self.writer:
                 # Log epoch loss for multiple experiments under the same main tag "Eval/Epoch_Loss"
                 self.writer.add_scalars("Eval/Epoch_Loss", {f"exp_{experiment_number}": epoch_loss}, epoch)
                 # Log accuracy for multiple experiments under the same main tag "Eval/Accuracy"
                 self.writer.add_scalars("Eval/Accuracy", {f"exp_{experiment_number}": avg_accuracy}, epoch)
+
+                if self.config.get("track_embeddings", False):
+                    # Log the average embeddings for each target tuple.
+                    # Convert the vectors to a tensor (ensuring they all have the same length):
+                    embeddings = torch.stack(list(avg_embeddings.values()))
+                    # Use the dictionary keys as metadata:
+                    metadata = list(avg_embeddings.keys())
+                    # Log the embeddings to TensorBoard.
+                    self.writer.add_embedding(embeddings, metadata=metadata, global_step=epoch, tag=(f"Eval/Avg_Embeddings/exp_{experiment_number}"))
+
 
     @staticmethod
     def is_pure_graph(target_vec):
