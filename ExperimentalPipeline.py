@@ -53,9 +53,9 @@ def main():
         "phase2_epochs": 50,
         "num_epochs": 12,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GCN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
         "pooling": "mean",
-        "log_dir": "runs/simple_same/mean/12",
+        "log_dir": "runs/GIN/simple/same/mean/12",
         "add_graph": False,
         "track_embeddings": False,  # In TensorBoard, track the embeddings of the last layer.
         "save": True
