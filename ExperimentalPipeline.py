@@ -45,7 +45,7 @@ def main():
         "num_test_samples": 1500,
         "batch_size": 16,
         "in_dim": 12,
-        "hidden_dims": [12, 12],      # REQUIRED: List of hidden layer dimensions
+        "hidden_dims": [12, 6],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -55,7 +55,7 @@ def main():
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
         "pooling": "max",
-        "log_dir": "runs/GIN/simple/same/max/12",
+        "log_dir": "runs/GIN/simple/small/max/12",
         "add_graph": False,
         "track_embeddings": False,  # In TensorBoard, track the embeddings of the last layer.
         "save": True
