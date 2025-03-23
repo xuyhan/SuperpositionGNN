@@ -60,7 +60,11 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         ).to(experiment_config["device"])
         
         optimizer = optim.Adam(model.parameters(), lr=experiment_config.get("lr", 0.01))
-        criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
+        if experiment_config.get("loss", "BCE") == "BCE":
+            criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
+        elif experiment_config.get("loss", "BCE") == "MSE":
+            criterion = torch.nn.MSELoss(reduction='none')
+
 
         # Save the model as a graph to visualize in TensorBoard.
         writer = get_writer(experiment_config.get("log_dir", None))

@@ -48,7 +48,7 @@ def run_single_experiment(experiment_config, file_path):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=2)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=50)
     print(f"Results: {results}")
 
     # Process and enhance the experiment results.
@@ -133,6 +133,7 @@ def main():
         "num_epochs": 12,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # e.g. "GCN" or "GIN"
+        "loss": "MSE",
         "pooling": "max",
         "log_dir": "runs/GIN/simple/large/max/12",
         "add_graph": False,
@@ -141,7 +142,7 @@ def main():
     }
 
     # Define specific rows to iterate over (replace with actual row indices)
-    specific_rows = [2,3]  # example rows, can use index as in excel file. 
+    specific_rows = [114]  # example rows, can use index as in excel file. 
     specific_rows = [i - 2 for i in specific_rows]
     df = pd.read_excel('ExperimentList/combinations.xlsx')
     # Create a list of configurations to iterate over
@@ -157,8 +158,8 @@ def main():
         config['pooling'] = row['Pooling']
         config['num_categories'] = row['Feature_num']
         config['in_dim'] = row['Feature_num']
-        config['log_dir'] = f"runs/TEST/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
-        file_path = f"{'TEST', row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
+        config['log_dir'] = f"runs/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
+        file_path = (f"{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}")
 
         # Set hidden_dims based on depth, feature_num, and type as per specified logic
         if row['Depth'] == 1:

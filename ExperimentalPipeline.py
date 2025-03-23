@@ -54,6 +54,7 @@ def main():
         "num_epochs": 12,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "loss": "BCE",               # REQUIRED: Options: "BCE", "MSE"
         "pooling": "mean",
         "log_dir": "runs/GIN/simple/small/mean/7",
         "add_graph": False,
