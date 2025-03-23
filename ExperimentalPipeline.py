@@ -34,7 +34,7 @@ def main():
     # Define the experiment configuration.
     experiment_config = {
         "mode": "simple",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 12,        # REQUIRED motif does not contibute to the number of categories
+        "num_categories": 7,        # REQUIRED motif does not contibute to the number of categories
         "p": 0.8,
         "p_count": 0.9,             # Probability for edges in count mode
         "num_nodes": 20,
@@ -44,8 +44,8 @@ def main():
         "num_train_samples": 5000,
         "num_test_samples": 1500,
         "batch_size": 16,
-        "in_dim": 12,
-        "hidden_dims": [12, 6],      # REQUIRED: List of hidden layer dimensions
+        "in_dim": 7,
+        "hidden_dims": [12, 3],      # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
@@ -54,12 +54,15 @@ def main():
         "num_epochs": 12,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
-        "pooling": "max",
-        "log_dir": "runs/GIN/simple/small/max/12",
+        "pooling": "mean",
+        "log_dir": "runs/GIN/simple/small/mean/7",
         "add_graph": False,
         "track_embeddings": False,  # In TensorBoard, track the embeddings of the last layer.
         "save": True
     }
+
+    # Specify the folder where you want to save the file.
+    folder = "experiment_results/GIN/simple/small/mean/7"
     
     # Check for required keys.
     required_keys = ["hidden_dims", "mode", "model_type", "num_categories"]
@@ -71,7 +74,7 @@ def main():
     sparcity = sparcity_calculator(experiment_config["num_nodes"], experiment_config["p"], experiment_config["in_dim"])
 
     print("Running experiments...")
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=50)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=1)
     print(f"Results: {results}")
 
     # Make results more readable and add SVD results for each experiment
@@ -110,8 +113,6 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"exp_{mode}_{model_type}_{num_categories}cats_{final_hidden_dim}hidden_{timestamp}.json"
     
-    # Specify the folder where you want to save the file.
-    folder = "experiment_results"
     # Create the folder if it doesn't exist.
     os.makedirs(folder, exist_ok=True)
     

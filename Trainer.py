@@ -292,9 +292,12 @@ class Trainer:
 
         # Convert dictionary or list to a NumPy array.
         if isinstance(embeddings, dict):
-            embeddings = np.array(list(embeddings.values()))
-        elif isinstance(embeddings, list):
-            embeddings = np.array(embeddings)
+            embeddings = list(embeddings.values())
+
+            embeddings = np.array([
+                embedding.cpu().detach().numpy() if hasattr(embedding, 'cpu') else embedding.numpy()
+                for embedding in embeddings
+            ])
     
         # Ensure embeddings is a 2D array (if it's a single vector, reshape it).
         if embeddings.ndim == 1:
