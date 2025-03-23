@@ -5,7 +5,7 @@ from Trainer import *
 from Visualizer import *
 from torch_geometric.data import DataLoader
 from Runner import run_multiple_experiments
-from ExperimentalPipeline import main
+from ExperimentalPipeline1 import main
 
 if __name__ == '__main__':
     main()

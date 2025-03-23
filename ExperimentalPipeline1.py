@@ -6,6 +6,7 @@ from Runner import run_multiple_experiments
 from Trainer import Trainer
 from GraphGeneration import sparcity_calculator
 import numpy as np
+import pandas as pd
 
 def convert_keys_to_str(obj):
     """
@@ -30,7 +31,7 @@ def convert_keys_to_str(obj):
     else:
         return obj
 
-def run_single_experiment(experiment_config):
+def run_single_experiment(experiment_config, file_path):
     # Check for required keys.
     required_keys = ["hidden_dims", "mode", "model_type", "num_categories"]
     for key in required_keys:
@@ -47,7 +48,7 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=50)
+    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=2)
     print(f"Results: {results}")
 
     # Process and enhance the experiment results.
@@ -82,7 +83,7 @@ def run_single_experiment(experiment_config):
     file_name = f"exp_{mode}_{model_type}_{num_categories}cats_{final_hidden_dim}hidden_{timestamp}.json"
     
     # Define the folder structure; you could even vary this per config.
-    folder = os.path.join("experiment_results", model_type, mode)
+    folder = os.path.join("experiment_results", file_path)
     os.makedirs(folder, exist_ok=True)
     file_path = os.path.join(folder, file_name)
     
@@ -139,21 +140,49 @@ def main():
         "save": True
     }
 
-    # Create a list of configurations to iterate over.
-    # For example, we vary the "mode" and adjust other parameters accordingly.
+    # Define specific rows to iterate over (replace with actual row indices)
+    specific_rows = [2,3]  # example rows, can use index as in excel file. 
+    specific_rows = [i - 2 for i in specific_rows]
+    df = pd.read_excel('ExperimentList/combinations.xlsx')
+    # Create a list of configurations to iterate over
     configs = []
-    for mode in ["simple", "motif", "correlated"]:
-        # Make a shallow copy of the base config.
+
+    for idx in specific_rows:
+        row = df.iloc[idx]
         config = base_config.copy()
-        config["mode"] = mode
-        # Optionally adjust other parameters for each configuration.
-        if mode == "motif":
-            config["motif_dim"] = 5  # example change for motif mode
+
+        # Set parameters from Excel
+        config['loss'] = row['Loss']
+        config['model_type'] = row['Architecture']
+        config['pooling'] = row['Pooling']
+        config['num_categories'] = row['Feature_num']
+        config['in_dim'] = row['Feature_num']
+        config['log_dir'] = f"runs/TEST/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
+        file_path = f"{'TEST', row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
+
+        # Set hidden_dims based on depth, feature_num, and type as per specified logic
+        if row['Depth'] == 1:
+            hidden_dim_lookup = {
+                5: {'large': [8], 'same': [5], 'small_direct': [2], 'small_compression': [2]},
+                12: {'large': [18], 'same': [12], 'small_direct': [6], 'small_compression': [6]}
+            }
+        elif row['Depth'] == 2:
+            hidden_dim_lookup = {
+                5: {'large': [8, 8], 'same': [5, 5], 'small_direct': [2, 2], 'small_compression': [5, 2]},
+                12: {'large': [18, 18], 'same': [12, 12], 'small_direct': [6, 6], 'small_compression': [12, 6]}
+            }
+        elif row['Depth'] == 3:
+            hidden_dim_lookup = {
+                5: {'large': [8, 8, 8], 'same': [5, 5, 5], 'small_direct': [2, 2, 2], 'small_compression': [5, 5, 2]},
+                12: {'large': [18, 18, 18], 'same': [12, 12, 12], 'small_direct': [6, 6, 6], 'small_compression': [12, 12, 6]}
+            }
+
+        hidden_dim_value = hidden_dim_lookup[row['Feature_num']][row['Type']]
+        config['hidden_dims'] = hidden_dim_value 
+
         configs.append(config)
-    
+
     # Loop through each configuration and run the corresponding experiment.
     for config in configs:
-        run_single_experiment(config)
+        run_single_experiment(config, file_path)
 
-if __name__ == "__main__":
-    main()
