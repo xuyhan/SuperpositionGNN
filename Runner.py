@@ -60,6 +60,7 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         ).to(experiment_config["device"])
         
         optimizer = optim.Adam(model.parameters(), lr=experiment_config.get("lr", 0.01))
+        # Set the loss function based on the experiment configuration.
         if experiment_config.get("loss", "BCE") == "BCE":
             criterion = torch.nn.BCEWithLogitsLoss(reduction='none')
         elif experiment_config.get("loss", "BCE") == "MSE":

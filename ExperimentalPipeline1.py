@@ -31,7 +31,7 @@ def convert_keys_to_str(obj):
     else:
         return obj
 
-def run_single_experiment(experiment_config, file_path):
+def run_single_experiment(experiment_config):
     # Check for required keys.
     required_keys = ["hidden_dims", "mode", "model_type", "num_categories"]
     for key in required_keys:
@@ -83,6 +83,7 @@ def run_single_experiment(experiment_config, file_path):
     file_name = f"exp_{mode}_{model_type}_{num_categories}cats_{final_hidden_dim}hidden_{timestamp}.json"
     
     # Define the folder structure; you could even vary this per config.
+    file_path = experiment_config.get("file_path", "experiment_results")
     folder = os.path.join("experiment_results", file_path)
     os.makedirs(folder, exist_ok=True)
     file_path = os.path.join(folder, file_name)
@@ -136,13 +137,14 @@ def main():
         "loss": "MSE",
         "pooling": "max",
         "log_dir": "runs/GIN/simple/large/max/12",
+        "file_path": "GIN/simple/large/max/12",
         "add_graph": False,
         "track_embeddings": False,
         "save": True
     }
 
     # Define specific rows to iterate over (replace with actual row indices)
-    specific_rows = [114]  # example rows, can use index as in excel file. 
+    specific_rows = [2,4,6,7,8]  # example rows, can use index as in excel file. 
     specific_rows = [i - 2 for i in specific_rows]
     df = pd.read_excel('ExperimentList/combinations.xlsx')
     # Create a list of configurations to iterate over
@@ -159,7 +161,7 @@ def main():
         config['num_categories'] = row['Feature_num']
         config['in_dim'] = row['Feature_num']
         config['log_dir'] = f"runs/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
-        file_path = (f"{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}")
+        config['file_path'] = (f"{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}")
 
         # Set hidden_dims based on depth, feature_num, and type as per specified logic
         if row['Depth'] == 1:
@@ -185,5 +187,5 @@ def main():
 
     # Loop through each configuration and run the corresponding experiment.
     for config in configs:
-        run_single_experiment(config, file_path)
+        run_single_experiment(config)
 

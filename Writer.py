@@ -1,10 +1,9 @@
 from torch.utils.tensorboard import SummaryWriter
 
-_writer = None
+_writers = {}  # dictionary, not a single writer
 
-def get_writer(log_dir=None):
-    global _writer
-    if _writer is None:
-        assert log_dir is not None, "log_dir must be provided for the first writer initialization."
-        _writer = SummaryWriter(log_dir)
-    return _writer
+def get_writer(log_dir):
+    global _writers
+    if log_dir not in _writers:
+        _writers[log_dir] = SummaryWriter(log_dir=log_dir)
+    return _writers[log_dir]
