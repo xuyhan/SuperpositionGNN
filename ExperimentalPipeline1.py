@@ -110,7 +110,7 @@ def run_single_experiment(experiment_config):
 
     return output_str
 
-def main():
+def main(specific_rows):
     # Choose MODE
     Mode = "motif"  # Options: "simple", "motif", "correlated", "combined"
     # Base configuration used for all experiments.
@@ -171,7 +171,6 @@ def main():
     }
 
     # Define specific rows to iterate over (replace with actual row indices)
-    specific_rows = [2,3]  # example rows, can use index as in excel file. 
     specific_rows = [i - 2 for i in specific_rows]
 
     # Create a list of configurations to iterate over
@@ -217,6 +216,7 @@ def main():
             config['hidden_dims'] = hidden_dim_value 
 
             configs.append(config)
+
     elif Mode == "motif":
         df = pd.read_excel('ExperimentList/motif_combinations.xlsx')
 
