@@ -189,11 +189,7 @@ def main(specific_rows):
             config['model_type'] = row['Architecture']
             config['pooling'] = row['Pooling']
             config['num_categories'] = row['Feature_num']
-            if row['Feature_num'] == 5:
-                config['p'] = 0.3
             config['in_dim'] = row['Feature_num']
-            config['log_dir'] = f"runs/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}"
-            config['file_path'] = (f"{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}")
 
             # Set hidden_dims based on depth, feature_num, and type as per specified logic
             if row['Depth'] == 1:
@@ -215,7 +211,17 @@ def main(specific_rows):
             hidden_dim_value = hidden_dim_lookup[row['Feature_num']][row['Type']]
             config['hidden_dims'] = hidden_dim_value 
 
-            configs.append(config)
+            if row['Feature_num'] == 5:
+                probs = [0.3,0.6,0.8]
+                labels = ['high', 'medium', 'low']
+                for i in range(3):
+                    config['p'] = probs[i]
+                    config['in_dim'] = row['Feature_num']
+                    config['log_dir'] = f"runs/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}/{labels[i]}"
+                    config['file_path'] = (f"{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}/{labels[i]}")
+                    configs.append(config)
+            elif row['Feature_num'] == 12:
+                configs.append(config)
 
     elif Mode == "motif":
         df = pd.read_excel('ExperimentList/motif_combinations.xlsx')
