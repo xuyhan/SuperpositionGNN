@@ -241,6 +241,7 @@ class Trainer:
             print(f"Category_with_loss: [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss] = {category_with_loss}")
             return category_with_loss
         else:
+            print(f"Category_with_loss: [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss] = {category_with_loss}")
             return [target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss]
 
     @staticmethod

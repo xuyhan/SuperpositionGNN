@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, GINConv, global_mean_pool, global_max_pool
+from torch_scatter import scatter_mean
 
 # ----------------------------
 # Helper functions for final layer initialization
@@ -81,11 +82,38 @@ def initialize_output_weights(W, out_dim, hidden_dim):
     except ValueError:
         nn.init.orthogonal_(W)
 
+def global_generalized_mean_pool(x, batch, p, eps=1e-6):
+    """
+    Generalized mean pooling that preserves the sign of each element with numerical stability.
+    
+    For each element in x:
+      - Compute: sign(x) * (|x| + eps)^p
+      - Pool these values using scatter_mean.
+      - Apply the inverse transformation: sign(pooled) * (|pooled| + eps)^(1/p)
+    
+    Args:
+        x (Tensor): Node features of shape [num_nodes, feature_dim].
+        batch (Tensor): Batch vector of shape [num_nodes] indicating graph assignment.
+        p (float): Generalized mean parameter.
+        eps (float): A small constant to prevent numerical issues.
+    
+    Returns:
+        Tensor: Graph-level pooled representations, shape [num_graphs, feature_dim].
+    """
+    # Transform each element while preserving its sign and ensuring numerical stability.
+    x_transformed = torch.sign(x) * ((torch.abs(x) + eps) ** p)
+    
+    # Perform pooling (here, using the mean).
+    pooled = scatter_mean(x_transformed, batch, dim=0)
+    
+    # Apply the inverse transformation with epsilon for stability.
+    return torch.sign(pooled) * ((torch.abs(pooled) + eps) ** (1.0 / p))
+
 # ----------------------------
 # Unified GNN Model Class
 # ----------------------------
 class GNNModel(nn.Module):
-    def __init__(self, model_type="GCN", in_dim=3, hidden_dims=[3, 3], out_dim=3, freeze_final=True, pooling="mean"):
+    def __init__(self, model_type="GCN", in_dim=3, hidden_dims=[3, 3], out_dim=3, freeze_final=True, pooling="mean", gm_p=1.0):
         """
         Constructs a flexible GNN model.
         
@@ -99,6 +127,7 @@ class GNNModel(nn.Module):
         super(GNNModel, self).__init__()
         self.model_type = model_type
         self.pooling = pooling
+        self.p = gm_p
 
         if self.model_type == "GCN":
             self.convs = nn.ModuleList()
@@ -150,6 +179,8 @@ class GNNModel(nn.Module):
             graph_repr = global_mean_pool(x, batch)
         elif self.pooling == "max":
             graph_repr = global_max_pool(x, batch)
+        elif self.pooling == "gm":
+            graph_repr = global_generalized_mean_pool(x, batch, p = self.p)
         else:
             raise ValueError(f"Unsupported pooling type: {self.pooling}")
         logits = self.lin_out(graph_repr)
@@ -167,6 +198,8 @@ class GNNModel(nn.Module):
             return global_mean_pool(x, batch)
         elif self.pooling == "max":
             return global_max_pool(x, batch)
+        elif self.pooling == "gm":
+            return global_generalized_mean_pool(x, batch, p = self.p)
         else:
             raise ValueError(f"Unsupported pooling type: {self.pooling}")
 

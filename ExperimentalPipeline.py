@@ -56,14 +56,15 @@ def main():
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
         "loss": "BCE",               # REQUIRED: Options: "BCE", "MSE"
         "pooling": "mean",
-        "log_dir": "runs/GIN/simple/small/mean/7",
+        "gm_p": 1.0,
+        "log_dir": "runs/T/GIN/simple/small/mean/7",
         "add_graph": False,
         "track_embeddings": False,  # In TensorBoard, track the embeddings of the last layer.
         "save": True
     }
 
     # Specify the folder where you want to save the file.
-    folder = "experiment_results/GIN/simple/small/mean/7"
+    folder = "experiment_results/T/GIN/simple/small/mean/7"
     
     # Check for required keys.
     required_keys = ["hidden_dims", "mode", "model_type", "num_categories"]

@@ -132,6 +132,7 @@ def main(specific_rows, Mode):
         "model_type": "GIN",         # e.g. "GCN" or "GIN"
         "loss": "BCE",
         "pooling": "max",
+        "gm_p": 1.0,               # Generalized mean pooling parameter
         "log_dir": "runs/GIN/simple/large/max/12",
         "file_path": "GIN/simple/large/max/12",
         "add_graph": False,
@@ -161,6 +162,7 @@ def main(specific_rows, Mode):
         "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
         "loss": "BCE",
         "pooling": "max",
+        "gm_p": 1.0,               # Generalized mean pooling parameter
         "log_dir": "runs/GIN/simple/large/max/12",
         "file_path": "GIN/simple/large/max/12",
         "add_graph": False,
@@ -186,42 +188,53 @@ def main(specific_rows, Mode):
             config['loss'] = row['Loss']
             config['model_type'] = row['Architecture']
             config['pooling'] = row['Pooling']
-            config['num_categories'] = row['Feature_num']
-            config['in_dim'] = row['Feature_num']
+            config['num_categories'] = int(row['Feature_num'])
+            config['in_dim'] = int(row['Feature_num'])
 
             # Set hidden_dims based on depth, feature_num, and type as per specified logic
-            if row['Depth'] == 1:
+            if int(row['Depth']) == 1:
                 hidden_dim_lookup = {
                     5: {'large': [8], 'same': [5], 'small_direct': [2], 'small_compression': [2]},
                     12: {'large': [18], 'same': [12], 'small_direct': [6], 'small_compression': [6]}
                 }
-            elif row['Depth'] == 2:
+            elif int(row['Depth']) == 2:
                 hidden_dim_lookup = {
                     5: {'large': [8, 8], 'same': [5, 5], 'small_direct': [2, 2], 'small_compression': [5, 2]},
                     12: {'large': [18, 18], 'same': [12, 12], 'small_direct': [6, 6], 'small_compression': [12, 6]}
                 }
-            elif row['Depth'] == 3:
+            elif int(row['Depth']) == 3:
                 hidden_dim_lookup = {
                     5: {'large': [8, 8, 8], 'same': [5, 5, 5], 'small_direct': [2, 2, 2], 'small_compression': [5, 5, 2]},
                     12: {'large': [18, 18, 18], 'same': [12, 12, 12], 'small_direct': [6, 6, 6], 'small_compression': [12, 12, 6]}
                 }
 
-            hidden_dim_value = hidden_dim_lookup[row['Feature_num']][row['Type']]
+            hidden_dim_value = hidden_dim_lookup[int(row['Feature_num'])][row['Type']]
             config['hidden_dims'] = hidden_dim_value 
 
-            if row['Feature_num'] == 5:
+            if int(row['Feature_num']) == 5:
                 probs = [0.3,0.6,0.8]
                 labels = ['high', 'medium', 'low']
                 for i in range(3):
                     config['p'] = probs[i]
-                    config['in_dim'] = row['Feature_num']
-                    config['log_dir'] = f"runs/T/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}/{labels[i]}"
-                    config['file_path'] = (f"T/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}/{labels[i]}")
-                    configs.append(config.copy())
+                    config['in_dim'] = int(row['Feature_num'])
+                    if row['Pooling']=='gm':
+                        config['gm_p'] = row['Power']
+                        config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/{labels[i]}"
+                        config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{row['Feature_num']}/{labels[i]}")
+                        configs.append(config.copy())
+                    else:
+                        config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}"
+                        config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}")
+                        configs.append(config.copy())
             elif row['Feature_num'] == 12:
-                config['log_dir'] = f"runs/{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}/high"
-                config['file_path'] = (f"{row['Loss']}/{row['Depth']}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{row['Feature_num']}/high")
-                configs.append(config)
+                if row['Pooling']=='gm':
+                    config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high"
+                    config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
+                    configs.append(config)
+                else:
+                    config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high"
+                    config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
+                    configs.append(config)
 
     elif Mode == "motif":
         df = pd.read_excel('ExperimentList/motif_combinations.xlsx')
