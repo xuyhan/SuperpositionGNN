@@ -83,7 +83,7 @@ class Trainer:
         for epoch in range(1, num_epochs + 1):
             epoch_loss = self.train_one_epoch()
             print(f"Epoch {epoch}/{num_epochs}, Loss: {epoch_loss:.4f}")
-            _, avg_accuracy, _, avg_embeddings, _ = self.evaluate()
+            _, avg_accuracy, _, avg_embeddings, _, _ = self.evaluate()
             if self.writer:
                 # Log epoch loss for multiple experiments under the same main tag "Eval/Epoch_Loss"
                 self.writer.add_scalars("Eval/Epoch_Loss", {f"exp_{experiment_number}": epoch_loss}, epoch)
@@ -105,13 +105,30 @@ class Trainer:
         # A graph is considered pure if its target vector is one-hot.
         return target_vec.sum().item() == 1.0
 
+    @staticmethod
+    def is_empty_graph(target_vec):
+        # A graph is considered empty if its target vector is all zeros.
+        return target_vec.sum().item() == 0.0
+
+    @staticmethod
+    def aggregate_embeddings_with_stats(embeddings_list):
+        # Aggregates a list of embedding tensors by stacking them into a single tensor
+        # and computing the mean and standard deviation along the first dimension.
+        if not embeddings_list:
+            return None, None  # or handle empty case as needed
+        embeddings_tensor = torch.stack(embeddings_list)  # shape: [num_graphs, embedding_dim]
+        mean = embeddings_tensor.mean(dim=0)
+        std = embeddings_tensor.std(dim=0)
+        return mean, std
+
     def evaluate(self):
         self.model.eval()
         total_loss = 0.0
         total_samples = 0
         total_correct = 0
-        preds_dict = {}       # key: target tuple -> list of prediction tensors
-        graph_repr_dict = {}  # key: target tuple -> list of graph representations
+        preds_dict = {}         # key: target tuple -> list of prediction tensors
+        graph_repr_dict = {}    # key: target tuple -> list of graph representations
+        empty_graph_repr = []   # list to store embeddings for empty graphs
 
         with torch.no_grad():
             for data in self.test_loader:
@@ -131,33 +148,44 @@ class Trainer:
 
                 for i in range(batch_size):
                     t_vec = target[i].cpu()
-                    if not Trainer.is_pure_graph(t_vec):
-                        continue
-                    key = tuple(int(round(x)) for x in t_vec.tolist())
-                    if key not in preds_dict:
-                        preds_dict[key] = []
-                        graph_repr_dict[key] = []
-                    preds_dict[key].append(pred[i].cpu())
-                    graph_repr = self.model.get_graph_repr(data.x, data.edge_index, data.batch)[i].cpu()
-                    graph_repr_dict[key].append(graph_repr)
+                    # Process pure graphs (one-hot targets)
+                    if Trainer.is_pure_graph(t_vec):
+                        key = tuple(int(round(x)) for x in t_vec.tolist())
+                        if key not in preds_dict:
+                            preds_dict[key] = []
+                            graph_repr_dict[key] = []
+                        preds_dict[key].append(pred[i].cpu())
+                        graph_repr = self.model.get_graph_repr(data.x, data.edge_index, data.batch)[i].cpu()
+                        graph_repr_dict[key].append(graph_repr)
+                    # Process empty graphs (all-zero targets)
+                    elif Trainer.is_empty_graph(t_vec):
+                        graph_repr = self.model.get_graph_repr(data.x, data.edge_index, data.batch)[i].cpu()
+                        empty_graph_repr.append(graph_repr)
 
         avg_loss = total_loss / total_samples
         avg_accuracy = total_correct / total_samples
-        #print(f"Overall Loss: {avg_loss:.4f}, Accuracy (exact match): {avg_accuracy*100:.2f}%")
-        #print("\n=== Average Predictions (Pure Graphs) ===")
+
+        # Aggregate statistics for empty graphs if any are found.
+        empty_graph_stats = None
+        if empty_graph_repr:
+            mean, std = Trainer.aggregate_embeddings_with_stats(empty_graph_repr)
+            empty_graph_stats = {'mean': mean, 'std': std}
+            # For debugging or logging, you might print or store these stats.
+            # Example: print(f"Empty Graph Embedding Stats: Mean {mean.tolist()}, Std {std.tolist()}")
+
+        # Compute average predictions for pure graphs as before.
         avg_predictions = {}
         for k, preds in preds_dict.items():
             preds_tensor = torch.stack(preds)
             avg_pred = preds_tensor.float().mean(dim=0)
             avg_predictions[k] = avg_pred
-            #print(f"Target {k} => Average Prediction: {avg_pred.tolist()}")
-        #print("\n=== Average Hidden Embeddings (Pure Graphs) ===")
+
         avg_embeddings = {}
         for k, reps in graph_repr_dict.items():
             avg_repr = torch.stack(reps).mean(dim=0)
             avg_embeddings[k] = avg_repr
-            #print(f"Target {k} => Average Hidden Embedding: {avg_repr.tolist()}")
-        return avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions
+
+        return avg_loss, avg_accuracy, preds_dict, avg_embeddings, avg_predictions, empty_graph_stats
 
     # --- Geometric Analysis Functions ---
     @staticmethod
@@ -241,6 +269,7 @@ class Trainer:
             print(f"Category_with_loss: [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss] = {category_with_loss}")
             return category_with_loss
         else:
+            category_with_loss = [target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss]
             print(f"Category_with_loss: [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss] = {category_with_loss}")
             return [target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss]
 

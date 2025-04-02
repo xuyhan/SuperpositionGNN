@@ -19,6 +19,7 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
     results = []
     all_model_params = []
     all_average_embeddings = []
+    empty_graph_stats_list = []
     for i in range(num_experiments):
         print(f"\nRunning experiment {i+1}/{num_experiments}...")
         experiment_number = i + 1
@@ -108,12 +109,13 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         all_model_params.append(model_params)
 
         # Evaluate the model using the Trainer instance.
-        avg_loss, __, __, avg_embeddings, avg_predictions = trainer.evaluate()
+        avg_loss, __, __, avg_embeddings, avg_predictions, empty_graph_stats = trainer.evaluate()
         total_target_dim = experiment_config.get("num_categories", 3) + motif_dim
         result = trainer.structure_of_representation(total_target_dim, avg_predictions, avg_embeddings, avg_loss)
         results.append(result)
         all_average_embeddings.append(avg_embeddings)
-    return results, all_model_params, all_average_embeddings
+        empty_graph_stats_list.append(empty_graph_stats)
+    return results, all_model_params, all_average_embeddings, empty_graph_stats_list
 
 
 def extract_model_parameters(model):

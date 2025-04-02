@@ -8,7 +8,7 @@ from Runner import run_multiple_experiments
 from ExperimentalPipeline1 import main
 
 if __name__ == '__main__':
-    specific_rows = [129,130,131,132,133,134]
+    specific_rows = [25,33]
     Mode = "simple"
     main(specific_rows, Mode)
 

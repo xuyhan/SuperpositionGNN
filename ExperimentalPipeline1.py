@@ -48,7 +48,7 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings = run_multiple_experiments(experiment_config, num_experiments=50)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=2)
     print(f"Results: {results}")
 
     # Process and enhance the experiment results.
@@ -92,6 +92,7 @@ def run_single_experiment(experiment_config):
     output = {
         "experiment_config": experiment_config,
         "sparcity": sparcity,
+        "empty_graph_stats": empty_graph_stats,
         "summary format:": "Key: (Num of active features, Num of accurate feature, Geometry, Collapsed). Loss, s.d. Loss, Count",
         "summary": summary,
         "results": readable_results,
@@ -219,21 +220,21 @@ def main(specific_rows, Mode):
                     config['in_dim'] = int(row['Feature_num'])
                     if row['Pooling']=='gm':
                         config['gm_p'] = row['Power']
-                        config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/{labels[i]}"
-                        config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{row['Feature_num']}/{labels[i]}")
+                        config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/{labels[i]}"
+                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{row['Feature_num']}/{labels[i]}")
                         configs.append(config.copy())
                     else:
-                        config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}"
-                        config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}")
+                        config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}"
+                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}")
                         configs.append(config.copy())
             elif row['Feature_num'] == 12:
                 if row['Pooling']=='gm':
-                    config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high"
-                    config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
+                    config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high"
+                    config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
                     configs.append(config)
                 else:
-                    config['log_dir'] = f"runs/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high"
-                    config['file_path'] = (f"{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
+                    config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high"
+                    config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
                     configs.append(config)
 
     elif Mode == "motif":
