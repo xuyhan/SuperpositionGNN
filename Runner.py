@@ -88,6 +88,7 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
             "phase2_epochs": experiment_config.get("phase2_epochs", 10),
             "log_dir": experiment_config.get("log_dir", None),
             "track_embeddings": experiment_config.get("track_embeddings", False),
+            "track_singular_values": experiment_config.get("track_singular_values", False),
         }
         
         # Create Trainer instance and train the model.

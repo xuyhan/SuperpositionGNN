@@ -144,6 +144,8 @@ class GNNModel(nn.Module):
             for hdim in hidden_dims:
                 mlp = nn.Sequential(
                     nn.Linear(prev_dim, hdim),
+                    # leaky_relu is used to avoid dead ReLU units.
+                    #nn.LeakyReLU(negative_slope=0.1),
                     nn.ReLU(),
                     nn.Linear(hdim, hdim)
                 )

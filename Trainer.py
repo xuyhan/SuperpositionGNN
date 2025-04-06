@@ -90,6 +90,17 @@ class Trainer:
                 # Log accuracy for multiple experiments under the same main tag "Eval/Accuracy"
                 self.writer.add_scalars("Eval/Accuracy", {f"exp_{experiment_number}": avg_accuracy}, epoch)
 
+                if self.config.get("track_singular_values", False):
+                    # Log the singular values for each target tuple.
+                    # Convert the vectors to a tensor (ensuring they all have the same length):
+                    embeddings = torch.stack(list(avg_embeddings.values()))
+                    # Perform SVD analysis on the embeddings.
+                    rank, singular_values = Trainer.svd_analysis(embeddings)
+                    # Log the singular values to TensorBoard.
+                    self.writer.add_scalars("Eval/Singular_Values/Rank",{f"exp_{experiment_number}": rank}, epoch)
+                    scalar_dict = {f"sv_{i}": float(s) for i, s in enumerate(singular_values)}
+                    self.writer.add_scalars(f"Eval/Singular_Values_exp_{experiment_number}", scalar_dict, epoch)
+
                 if self.config.get("track_embeddings", False):
                     # Log the average embeddings for each target tuple.
                     # Convert the vectors to a tensor (ensuring they all have the same length):

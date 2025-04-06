@@ -48,7 +48,7 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=2)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=20)
     print(f"Results: {results}")
 
     # Process and enhance the experiment results.
@@ -138,6 +138,7 @@ def main(specific_rows, Mode):
         "file_path": "GIN/simple/large/max/12",
         "add_graph": False,
         "track_embeddings": False,
+        "track_singular_values": True,
         "save": True
     }
 
@@ -168,6 +169,36 @@ def main(specific_rows, Mode):
         "file_path": "GIN/simple/large/max/12",
         "add_graph": False,
         "track_embeddings": False,
+        "track_singular_values": True,
+        "save": True
+    }
+
+    base_config_count = {
+        "mode": "count",           
+        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
+        "p": 0.3,
+        "p_count": 0.9,  
+        "num_nodes": 20,
+        "num_train_samples": 5000,
+        "num_test_samples": 1500,
+        "batch_size": 4,
+        "in_dim": 2,
+        "hidden_dims": [6, 3],      # REQUIRED: List of hidden layer dimensions
+        "lr": 0.01,
+        "use_weighting": True,
+        "importance": (15.0, 10.0),
+        "phase1_epochs": 0,
+        "phase2_epochs": 10,
+        "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "loss": "BCE",
+        "pooling": "max",
+        "gm_p": 1.0,               # Generalized mean pooling parameter
+        "log_dir": "runs/GIN/count",
+        "file_path": "GIN/count",
+        "add_graph": False,
+        "track_embeddings": False,
+        "track_singular_values": True,
         "save": True
     }
 
@@ -249,6 +280,36 @@ def main(specific_rows, Mode):
             config['pooling'] = row['Pooling']
             config['log_dir'] = f"runs/motif/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
             config['file_path'] = (f"motif/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}")
+
+            if row['Hidden'] == 1:
+                config['hidden_dims'] = [2]
+            elif row['Hidden'] == 2:
+                config['hidden_dims'] = [2, 2]
+            elif row['Hidden'] == 3:
+                config['hidden_dims'] = [3, 2]
+            elif row['Hidden'] == 4:
+                config['hidden_dims'] = [4, 2]
+            elif row['Hidden'] == 5:
+                config['hidden_dims'] = [2, 2, 2]
+            elif row['Hidden'] == 6:
+                config['hidden_dims'] = [3, 3, 2]
+            elif row['Hidden'] == 7:
+                config['hidden_dims'] = [4, 4, 2]
+
+            configs.append(config)
+
+    elif Mode == "count":
+        df = pd.read_excel('ExperimentList/count_combinations.xlsx')
+
+        for idx in specific_rows:
+            row = df.iloc[idx]
+            config = base_config_count.copy()
+
+            # Set parameters from Excel
+            config['model_type'] = row['Architecture']
+            config['pooling'] = row['Pooling']
+            config['log_dir'] = f"runs/T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
+            config['file_path'] = (f"T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}")
 
             if row['Hidden'] == 1:
                 config['hidden_dims'] = [2]
