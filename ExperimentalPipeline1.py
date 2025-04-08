@@ -30,6 +30,40 @@ def convert_keys_to_str(obj):
         return obj.detach().cpu().tolist()
     else:
         return obj
+    
+def get_all_elements(experimental_config, average_embeddings):
+    get_elements = experimental_config["get_elements"]
+    if get_elements:
+        all_elements = []
+        try:
+            elements_list = average_embeddings[(5, 5, 5, 0)]
+        except KeyError:
+            print("Key not found, skipping")
+            elements_list = []
+        for elements_dict in elements_list:
+            # Loop over each tensor vector in the dictionary
+            for tensor_vector in elements_dict.values():
+                # Loop over each element in the tensor vector and convert it to a Python number
+                for number in tensor_vector:
+                    all_elements.append(number.item())
+        
+        # Construct an output directory path using the provided 'gm_p' value.
+        output_dir = f"experiment_results/all_elements/{experimental_config['gm_p']}"
+        # Ensure the directory exists.
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # Specify a file name and combine it with the directory.
+        file_name = "all_elements.txt"
+        output_file_path = os.path.join(output_dir, file_name)
+        
+        # Write the all_elements list to the file.
+        with open(output_file_path, "w") as file:
+            file.write(str(all_elements))
+        
+        return all_elements
+        
+
 
 def run_single_experiment(experiment_config):
     # Check for required keys.
@@ -48,7 +82,7 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=20)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=3)
     print(f"Results: {results}")
 
     # Process and enhance the experiment results.
@@ -72,6 +106,8 @@ def run_single_experiment(experiment_config):
     # Perform additional geometry analysis and summarization.
     config_losses, model_params, average_embeddings = Trainer.geometry_analysis(results, all_model_params, all_average_embeddings)
     summary, model_summary, average_embeddings_summary = Trainer.summarize_config_losses(config_losses, model_params, average_embeddings)
+    # Saves all elements in an extra file
+    get_all_elements(experiment_config, average_embeddings)
     
     # Dynamically build a descriptive file name.
     mode = experiment_config["mode"]
@@ -139,6 +175,7 @@ def main(specific_rows, Mode):
         "add_graph": False,
         "track_embeddings": False,
         "track_singular_values": True,
+        "get_elements": True,          # To get all the elements of the hidden embedding (best configuration)
         "save": True
     }
 
