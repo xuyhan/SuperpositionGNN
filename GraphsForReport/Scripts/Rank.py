@@ -127,5 +127,5 @@ if __name__ == "__main__":
     axes[1].set_title("Singular Values Evolution", fontsize=14)
     
     plt.tight_layout()
-    plt.savefig("combined_figure.pdf", format="pdf")
+    # plt.savefig("combined_figure.pdf", format="pdf")
     plt.show()

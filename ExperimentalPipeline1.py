@@ -7,62 +7,7 @@ from Trainer import Trainer
 from GraphGeneration import sparcity_calculator
 import numpy as np
 import pandas as pd
-
-def convert_keys_to_str(obj):
-    """
-    Recursively convert dictionary keys to strings and convert
-    non-serializable objects (like torch.device, torch.Tensor, and NumPy types)
-    to serializable types.
-    """
-    if isinstance(obj, dict):
-        return {str(k): convert_keys_to_str(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_keys_to_str(item) for item in obj]
-    elif isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, (np.integer, np.int64)):
-        return int(obj)
-    elif isinstance(obj, (np.floating, np.float64)):
-        return float(obj)
-    elif isinstance(obj, torch.device):
-        return str(obj)
-    elif isinstance(obj, torch.Tensor):
-        return obj.detach().cpu().tolist()
-    else:
-        return obj
-    
-def get_all_elements(experimental_config, average_embeddings):
-    get_elements = experimental_config["get_elements"]
-    if get_elements:
-        all_elements = []
-        try:
-            elements_list = average_embeddings[(5, 5, 5, 0)]
-        except KeyError:
-            print("Key not found, skipping")
-            elements_list = []
-        for elements_dict in elements_list:
-            # Loop over each tensor vector in the dictionary
-            for tensor_vector in elements_dict.values():
-                # Loop over each element in the tensor vector and convert it to a Python number
-                for number in tensor_vector:
-                    all_elements.append(number.item())
-        
-        # Construct an output directory path using the provided 'gm_p' value.
-        output_dir = f"experiment_results/all_elements/{experimental_config['gm_p']}"
-        # Ensure the directory exists.
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
-        
-        # Specify a file name and combine it with the directory.
-        file_name = "all_elements.txt"
-        output_file_path = os.path.join(output_dir, file_name)
-        
-        # Write the all_elements list to the file.
-        with open(output_file_path, "w") as file:
-            file.write(str(all_elements))
-        
-        return all_elements
-        
+from PipelineUtils import convert_keys_to_str, get_all_elements, make_readable_results, determine_percentage_of_collapsed, get_hidden_dims
 
 
 def run_single_experiment(experiment_config):
@@ -82,27 +27,15 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=20)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=1)
     print(f"Results: {results}")
 
-    # Process and enhance the experiment results.
-    readable_results = []
-    keys = [
-        "Num of features",         # index 0
-        "Num of active features",  # index 1
-        "Num of accurate feature", # index 2
-        "Geometry",                # index 3
-        "Collapsed",               # index 4
-        "Loss"                     # index 5
-    ]
-    for result_entry, embedding in zip(results, all_average_embeddings):
-        # Compute SVD analysis for the embeddings.
-        rank, singular_values = Trainer.svd_analysis(embedding)
-        entry_dict = { key: result_entry[i] for i, key in enumerate(keys) }
-        entry_dict["Rank"] = rank
-        entry_dict["Singular values"] = singular_values.tolist()  # convert for JSON serialization
-        readable_results.append(entry_dict)
-    
+    # Convert the raw results into a human-readable format.
+    readable_results = make_readable_results(results, all_average_embeddings, Trainer)
+
+    # Determine the percentage of collapsed embeddings.
+    collapsed_percentage = determine_percentage_of_collapsed(readable_results)
+
     # Perform additional geometry analysis and summarization.
     config_losses, model_params, average_embeddings = Trainer.geometry_analysis(results, all_model_params, all_average_embeddings)
     summary, model_summary, average_embeddings_summary = Trainer.summarize_config_losses(config_losses, model_params, average_embeddings)
@@ -130,6 +63,7 @@ def run_single_experiment(experiment_config):
         "sparcity": sparcity,
         "empty_graph_stats": empty_graph_stats,
         "summary format:": "Key: (Num of active features, Num of accurate feature, Geometry, Collapsed). Loss, s.d. Loss, Count",
+        "collapsed percentage": collapsed_percentage,
         "summary": summary,
         "results": readable_results,
         "average embeddings summary": average_embeddings_summary,
@@ -164,7 +98,7 @@ def main(specific_rows, Mode):
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 0,
-        "phase2_epochs": 80,
+        "phase2_epochs": 50,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # e.g. "GCN" or "GIN"
         "loss": "BCE",
@@ -175,30 +109,30 @@ def main(specific_rows, Mode):
         "add_graph": False,
         "track_embeddings": False,
         "track_singular_values": True,
-        "get_elements": False,          # To get all the elements of the hidden embedding (best configuration)
+        "get_elements": False,      # To get all the elements of the hidden embedding (best configuration)
         "save": True
     }
 
     base_config_motif = {
         "mode": "motif",           # REQUIRED: Options: "simple", "motif", "correlated", "combined"
-        "num_categories": 0,        # REQUIRED motif does not contibute to the number of categories
+        "num_categories": 0,       # REQUIRED: motif does not contribute to the number of categories
         "p": 0.3,
         "num_nodes": 20,
-        "motif_dim": 3,             # 0 for simple experiments (no motif features)
+        "motif_dim": 3,            # 0 for simple experiments (no motif features)
         "chain_length_min": 2,
         "chain_length_max": 7,
         "num_train_samples": 5000,
         "num_test_samples": 1500,
         "batch_size": 4,
         "in_dim": 1,
-        "hidden_dims": [6, 3],      # REQUIRED: List of hidden layer dimensions
+        "hidden_dims": [6, 3],     # REQUIRED: List of hidden layer dimensions
         "lr": 0.01,
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 0,
         "phase2_epochs": 50,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GIN",       # REQUIRED: e.g. "GCN" or "GIN"
         "loss": "BCE",
         "pooling": "max",
         "gm_p": 1.0,               # Generalized mean pooling parameter
@@ -212,7 +146,7 @@ def main(specific_rows, Mode):
 
     base_config_count = {
         "mode": "count",           
-        "num_categories": 3,        # REQUIRED motif does not contibute to the number of categories
+        "num_categories": 3,        # REQUIRED: motif does not contribute to the number of categories
         "p": 0.3,
         "p_count": 0.9,  
         "num_nodes": 20,
@@ -227,7 +161,7 @@ def main(specific_rows, Mode):
         "phase1_epochs": 0,
         "phase2_epochs": 10,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
-        "model_type": "GIN",         # REQUIRED: e.g. "GCN" or "GIN"
+        "model_type": "GIN",       # REQUIRED: e.g. "GCN" or "GIN"
         "loss": "BCE",
         "pooling": "max",
         "gm_p": 1.0,               # Generalized mean pooling parameter
@@ -239,144 +173,122 @@ def main(specific_rows, Mode):
         "save": True
     }
 
-    # Define specific rows to iterate over (replace with actual row indices)
+    # Adjust specific_rows according to your logic.
     specific_rows = [i - 2 for i in specific_rows]
-
-    # Create a list of configurations to iterate over
     configs = []
 
-    # Setup configurations based on the mode
     if Mode == "simple":
         df = pd.read_excel('ExperimentList/combinations.xlsx')
-
         for idx in specific_rows:
             row = df.iloc[idx]
             config = base_config_simple.copy()
 
-            # Set parameters from Excel
+            type_lower = row['Type'].strip().lower()
+            feature_num_str = str(row['Feature_num'])
+
             config['loss'] = row['Loss']
             config['model_type'] = row['Architecture']
             config['pooling'] = row['Pooling']
-            config['num_categories'] = int(row['Feature_num'])
-            config['in_dim'] = int(row['Feature_num'])
 
-            # Set hidden_dims based on depth, feature_num, and type as per specified logic
-            if int(row['Depth']) == 1:
-                hidden_dim_lookup = {
-                    5: {'large': [8], 'same': [5], 'small_direct': [2], 'small_compression': [2]},
-                    12: {'large': [18], 'same': [12], 'small_direct': [6], 'small_compression': [6]}
-                }
-            elif int(row['Depth']) == 2:
-                hidden_dim_lookup = {
-                    3: {'small_compression': [3, 2]},
-                    4: {'small_compression': [4, 2]},
-                    5: {'large': [8, 8], 'same': [5, 5], 'small_direct': [2, 2], 'small_compression': [5, 2]},
-                    12: {'large': [18, 18], 'same': [12, 12], 'small_direct': [6, 6], 'small_compression': [12, 6]}
-                }
-            elif int(row['Depth']) == 3:
-                hidden_dim_lookup = {
-                    5: {'large': [8, 8, 8], 'same': [5, 5, 5], 'small_direct': [2, 2, 2], 'small_compression': [5, 5, 2]},
-                    12: {'large': [18, 18, 18], 'same': [12, 12, 12], 'small_direct': [6, 6, 6], 'small_compression': [12, 12, 6]}
-                }
+            if type_lower == "specify" or ("," in feature_num_str):
+                # For the specify case, call helper function to get a tuple: (feature, hidden_dims)
+                feature_val, hidden_dims = get_hidden_dims("simple",
+                                                           feature_num=row['Feature_num'],
+                                                           depth=int(row['Depth']),
+                                                           type_str=row['Type'])
+                config['num_categories'] = feature_val
+                config['in_dim'] = feature_val
+                config['hidden_dims'] = hidden_dims
 
-            hidden_dim_value = hidden_dim_lookup[int(row['Feature_num'])][row['Type']]
-            config['hidden_dims'] = hidden_dim_value 
-
-            if int(row['Feature_num']) == 5:
-                probs = [0.3,0.6,0.8]
-                labels = ['high', 'medium', 'low']
-                for i in range(1):
-                    config['p'] = probs[i]
-                    config['in_dim'] = int(row['Feature_num'])
-                    if row['Pooling']=='gm':
-                        config['gm_p'] = row['Power']
-                        config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/{labels[i]}"
-                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{row['Feature_num']}/{labels[i]}")
+                # Use a default naming convention for specify.
+                config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/"
+                                     f"{row['Architecture']}/{row['Type']}/{row['Feature_num']}/specified")
+                config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/"
+                                       f"{row['Architecture']}/{row['Type']}/{row['Feature_num']}/specified")
+                configs.append(config.copy())
+            else:
+                # Regular case using the lookup.
+                config['num_categories'] = int(feature_num_str)
+                config['in_dim'] = int(feature_num_str)
+                config['hidden_dims'] = get_hidden_dims("simple",
+                                                       feature_num=row['Feature_num'],
+                                                       depth=int(row['Depth']),
+                                                       type_str=row['Type'])
+                if int(row['Feature_num']) == 5:
+                    probs = [0.3, 0.6, 0.8]
+                    labels = ['high', 'medium', 'low']
+                    for i in range(1):  # Example: iterate over one probability option.
+                        config['p'] = probs[i]
+                        if row['Pooling'] == 'gm':
+                            config['gm_p'] = row['Power']
+                            config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                                 f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/{labels[i]}")
+                            config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                                   f"{row['Type']}/p_gm={row['Power']}/{row['Feature_num']}/{labels[i]}")
+                        else:
+                            config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                                 f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}")
+                            config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                                   f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}")
                         configs.append(config.copy())
+                elif int(row['Feature_num']) == 12:
+                    if row['Pooling'] == 'gm':
+                        config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                             f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
+                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                               f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
+                        configs.append(config)
                     else:
-                        config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}"
-                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/{labels[i]}")
-                        configs.append(config.copy())
-            elif row['Feature_num'] == 12:
-                if row['Pooling']=='gm':
-                    config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high"
-                    config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
-                    configs.append(config)
-                else:
-                    config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high"
-                    config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
-                    configs.append(config)
-            elif row['Feature_num'] == 3:
-                config['p'] = 0.18
-                config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}"
-                config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
-                configs.append(config.copy())
-            elif row['Feature_num'] == 4:
-                config['p'] = 0.24
-                config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}"
-                config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
-                configs.append(config.copy())
+                        config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                             f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
+                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                               f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
+                        configs.append(config)
+                elif int(row['Feature_num']) == 3:
+                    config['p'] = 0.18
+                    config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                         f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
+                    config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                           f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
+                    configs.append(config.copy())
+                elif int(row['Feature_num']) == 4:
+                    config['p'] = 0.24
+                    config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                         f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
+                    config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                                           f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
+                    configs.append(config.copy())
 
     elif Mode == "motif":
         df = pd.read_excel('ExperimentList/motif_combinations.xlsx')
-
         for idx in specific_rows:
             row = df.iloc[idx]
             config = base_config_motif.copy()
-
-            # Set parameters from Excel
+            
             config['model_type'] = row['Architecture']
             config['pooling'] = row['Pooling']
             config['log_dir'] = f"runs/motif/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
-            config['file_path'] = (f"motif/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}")
-
-            if row['Hidden'] == 1:
-                config['hidden_dims'] = [2]
-            elif row['Hidden'] == 2:
-                config['hidden_dims'] = [2, 2]
-            elif row['Hidden'] == 3:
-                config['hidden_dims'] = [3, 2]
-            elif row['Hidden'] == 4:
-                config['hidden_dims'] = [4, 2]
-            elif row['Hidden'] == 5:
-                config['hidden_dims'] = [2, 2, 2]
-            elif row['Hidden'] == 6:
-                config['hidden_dims'] = [3, 3, 2]
-            elif row['Hidden'] == 7:
-                config['hidden_dims'] = [4, 4, 2]
-
+            config['file_path'] = f"motif/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
+            
+            # Use the helper function for motif mode.
+            config['hidden_dims'] = get_hidden_dims("motif", hidden=row['Hidden'])
             configs.append(config)
 
     elif Mode == "count":
         df = pd.read_excel('ExperimentList/count_combinations.xlsx')
-
         for idx in specific_rows:
             row = df.iloc[idx]
             config = base_config_count.copy()
-
-            # Set parameters from Excel
+            
             config['model_type'] = row['Architecture']
             config['pooling'] = row['Pooling']
             config['log_dir'] = f"runs/T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
-            config['file_path'] = (f"T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}")
-
-            if row['Hidden'] == 1:
-                config['hidden_dims'] = [2]
-            elif row['Hidden'] == 2:
-                config['hidden_dims'] = [2, 2]
-            elif row['Hidden'] == 3:
-                config['hidden_dims'] = [3, 2]
-            elif row['Hidden'] == 4:
-                config['hidden_dims'] = [4, 2]
-            elif row['Hidden'] == 5:
-                config['hidden_dims'] = [2, 2, 2]
-            elif row['Hidden'] == 6:
-                config['hidden_dims'] = [3, 3, 2]
-            elif row['Hidden'] == 7:
-                config['hidden_dims'] = [4, 4, 2]
-
+            config['file_path'] = f"T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
+            
+            # Use the helper function for count mode.
+            config['hidden_dims'] = get_hidden_dims("count", hidden=row['Hidden'])
             configs.append(config)
-
+    
     # Loop through each configuration and run the corresponding experiment.
     for config in configs:
         run_single_experiment(config)
