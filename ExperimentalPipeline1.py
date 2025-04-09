@@ -82,7 +82,7 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=3)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=20)
     print(f"Results: {results}")
 
     # Process and enhance the experiment results.
@@ -164,7 +164,7 @@ def main(specific_rows, Mode):
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 0,
-        "phase2_epochs": 50,
+        "phase2_epochs": 80,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # e.g. "GCN" or "GIN"
         "loss": "BCE",
@@ -175,7 +175,7 @@ def main(specific_rows, Mode):
         "add_graph": False,
         "track_embeddings": False,
         "track_singular_values": True,
-        "get_elements": True,          # To get all the elements of the hidden embedding (best configuration)
+        "get_elements": False,          # To get all the elements of the hidden embedding (best configuration)
         "save": True
     }
 
@@ -268,6 +268,8 @@ def main(specific_rows, Mode):
                 }
             elif int(row['Depth']) == 2:
                 hidden_dim_lookup = {
+                    3: {'small_compression': [3, 2]},
+                    4: {'small_compression': [4, 2]},
                     5: {'large': [8, 8], 'same': [5, 5], 'small_direct': [2, 2], 'small_compression': [5, 2]},
                     12: {'large': [18, 18], 'same': [12, 12], 'small_direct': [6, 6], 'small_compression': [12, 6]}
                 }
@@ -283,7 +285,7 @@ def main(specific_rows, Mode):
             if int(row['Feature_num']) == 5:
                 probs = [0.3,0.6,0.8]
                 labels = ['high', 'medium', 'low']
-                for i in range(3):
+                for i in range(1):
                     config['p'] = probs[i]
                     config['in_dim'] = int(row['Feature_num'])
                     if row['Pooling']=='gm':
@@ -304,6 +306,16 @@ def main(specific_rows, Mode):
                     config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high"
                     config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
                     configs.append(config)
+            elif row['Feature_num'] == 3:
+                config['p'] = 0.18
+                config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}"
+                config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
+                configs.append(config.copy())
+            elif row['Feature_num'] == 4:
+                config['p'] = 0.24
+                config['log_dir'] = f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}"
+                config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}")
+                configs.append(config.copy())
 
     elif Mode == "motif":
         df = pd.read_excel('ExperimentList/motif_combinations.xlsx')
