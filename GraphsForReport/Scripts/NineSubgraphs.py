@@ -5,192 +5,207 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # Only needed for 3D plots
 
+
+# --------------------------------------------------------------------------
+#  Vector‑plot helper
+# --------------------------------------------------------------------------
 def plot_vectors_in_subplot(ax, vectors_dict):
     """
-    Plot 2D or 3D vectors in the provided subplot axis (ax),
-    without labeling axes. The scaling of the vector geometry is preserved.
-    
-    Parameters:
-      ax (matplotlib.axes.Axes or Axes3D): The subplot axis.
-      vectors_dict (dict): Dictionary with keys as labels and values as lists (2D or 3D vectors).
+    Draw one set of 2‑D or 3‑D arrows on a single axis (ax) with no ticks
+    and preserving aspect ratio.
     """
-    # Determine the dimensionality from the first vector
     first_vec = next(iter(vectors_dict.values()))
-    dim = len(first_vec)
-    
-    cmap = plt.get_cmap("tab10")
+    dim       = len(first_vec)
+
+    cmap   = plt.get_cmap("tab10")
     labels = list(vectors_dict.keys())
     origin = np.zeros(dim)
-    
+
     if dim == 2:
         for i, label in enumerate(labels):
             vec = np.array(vectors_dict[label])
             ax.quiver(origin[0], origin[1],
                       vec[0], vec[1],
-                      angles='xy', scale_units='xy', scale=1,
+                      angles="xy", scale_units="xy", scale=1,
                       color=cmap(i), width=0.005)
-        # Set axis limits based on vector values
-        all_vals = np.array(list(vectors_dict.values()))
-        min_val = all_vals.min() - 0.3
-        max_val = all_vals.max() + 0.3
-        ax.set_xlim([min_val, max_val])
-        ax.set_ylim([min_val, max_val])
-        # Force equal aspect ratio so vector geometry is preserved
-        ax.set_aspect('equal')
-        # Remove ticks and labels for a clean look
-        ax.set_xticks([])
-        ax.set_yticks([])
-        
+
+        vals    = np.array(list(vectors_dict.values()))
+        padding = 0.3
+        ax.set_xlim(vals.min() - padding, vals.max() + padding)
+        ax.set_ylim(vals.min() - padding, vals.max() + padding)
+        ax.set_aspect("equal")
+        ax.set_xticks([]); ax.set_yticks([])
+
     elif dim == 3:
         for i, label in enumerate(labels):
             vec = np.array(vectors_dict[label])
             ax.quiver(origin[0], origin[1], origin[2],
                       vec[0], vec[1], vec[2],
-                      arrow_length_ratio=0.1, color=cmap(i), linewidth=2)
-        all_vals = np.array(list(vectors_dict.values()))
-        min_val = all_vals.min() - 1
-        max_val = all_vals.max() + 1
-        ax.set_xlim([min_val, max_val])
-        ax.set_ylim([min_val, max_val])
-        ax.set_zlim([min_val, max_val])
-        # For 3D, equal aspect ratio is more challenging;
-        # we remove ticks to avoid misinterpretation.
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.set_zticks([])
+                      arrow_length_ratio=0.1,
+                      color=cmap(i), linewidth=2)
+
+        vals    = np.array(list(vectors_dict.values()))
+        padding = 1
+        ax.set_xlim(vals.min() - padding, vals.max() + padding)
+        ax.set_ylim(vals.min() - padding, vals.max() + padding)
+        ax.set_zlim(vals.min() - padding, vals.max() + padding)
+        ax.set_xticks([]); ax.set_yticks([]); ax.set_zticks([])
+
     else:
-        raise ValueError("Vectors must be either 2D or 3D.")
+        raise ValueError("Vectors must be either 2‑D or 3‑D.")
 
 
+# --------------------------------------------------------------------------
+#  CSV‑loss‑curve helper
+# --------------------------------------------------------------------------
 def plot_lines_from_folder(ax, folder_path, experiment_label, metric_name="Loss"):
     """
-    Plot all CSV files in a given folder on one subplot. Each CSV file is expected
-    to contain 'Step' and 'Value' columns. All lines in the subplot correspond to
-    the same experiment (folder) but are plotted with unique colors.
-    
-    Parameters:
-      ax (matplotlib.axes.Axes): The subplot axis to draw on.
-      folder_path (str): Path to the folder containing CSV files.
-      experiment_label (str): Label to use for identifying the experiment.
-      metric_name (str): Y-axis label (e.g., "Loss").
+    Plot all CSVs in *folder_path* (must have ‘Step’ and ‘Value’ cols) on ax.
     """
     csv_files = sorted(glob.glob(os.path.join(folder_path, "*.csv")))
     if not csv_files:
-        raise ValueError(f"No CSV files found in folder: {folder_path}")
-    
+        raise ValueError(f"No CSV files found in {folder_path}")
+
     cmap = plt.get_cmap("tab10")
     for i, csv_file in enumerate(csv_files):
+        label_file = ["Top config", "Bottom config"]
         df = pd.read_csv(csv_file)
-        epochs = df["Step"]
-        values = df["Value"]
-        ax.plot(epochs, values, label=f"{experiment_label} - file {i+1}", linewidth=2, color=cmap(i))
-    
+        ax.plot(df["Step"], df["Value"],
+                label=f"{label_file[i]}",
+                linewidth=2, color=cmap(i))
+
     ax.set_xlabel("Epoch", fontsize=10)
     ax.set_ylabel(metric_name, fontsize=10)
     ax.legend(fontsize=8)
     ax.grid(True)
 
-def create_combined_figure(vectors_list, csv_folders, csv_labels, metric_name="Loss", output_file="combined_figure.pdf"):
+
+# --------------------------------------------------------------------------
+#  NEW: combined figure with a single “shift” knob for the top rows
+# --------------------------------------------------------------------------
+def create_combined_figure(vectors_list,
+                           csv_folders,
+                           csv_labels,
+                           metric_name="Loss",
+                           vector_annotations=None,
+                           output_file="combined_figure.pdf",
+                           top_horizontal_shift=0.03):
     """
-    Create a 3x3 grid of subplots:
-      - Top 6 subplots display vector plots from the provided list of dictionaries.
-      - Bottom 3 subplots display line plots, each corresponding to one folder containing CSV files.
-    
-    The overall figure is adjusted to have a wide aspect ratio (roughly twice as wide as high)
-    so that it fits nicely as a figure in a paper, without altering the intrinsic vector scaling.
-    
-    Parameters:
-      vectors_list (list of dict): List of 6 dictionaries with vector data.
-      csv_folders (list of str): List of 3 folder paths, each containing CSV files.
-      csv_labels (list of str): List of 3 labels corresponding to each folder.
-      metric_name (str): Metric name for the y-axis in the line plots.
-      output_file (str): File name for the output PDF.
+    Draw a 3×3 grid (2 rows of vectors + 1 row of loss curves).
+
+    Parameters
+    ----------
+    vectors_list : list[dict]            – 6 dictionaries with vector coords
+    csv_folders  : list[str]             – 3 folders with loss CSVs
+    csv_labels   : list[str]             – labels for those folders
+    vector_annotations : list[dict]      – 6 dicts with
+        {'num_features', 'num_active_features', 'final_loss'}
+    top_horizontal_shift : float
+        How far to move the **top six** axes horizontally
+        (fraction of total figure width; positive → right, negative → left)
     """
     if len(vectors_list) != 6:
-        raise ValueError("Please provide exactly 6 dictionaries for the vector plots.")
+        raise ValueError("Need exactly 6 vector dictionaries.")
     if len(csv_folders) != 3 or len(csv_labels) != 3:
-        raise ValueError("Please provide exactly 3 CSV folder paths and 3 corresponding labels.")
-    
-    # Set the figure to be twice as wide as it is high.
+        raise ValueError("Need exactly 3 CSV folders and 3 labels.")
+    if vector_annotations is None or len(vector_annotations) != 6:
+        raise ValueError("Need exactly 6 annotation dicts.")
+
     fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(16, 8))
-    
-    # First two rows: vector plots
+
+    # --- top 2 rows: vectors + labels ---------------------------------------
     for i in range(6):
-        row = i // 3
-        col = i % 3
-        ax = axes[row, col]
+        row, col = divmod(i, 3)
+        ax       = axes[row, col]
+
+        # slide ax horizontally while keeping width and height unchanged
+        pos     = ax.get_position()
+        ax.set_position([pos.x0 + top_horizontal_shift,
+                         pos.y0,
+                         pos.width,
+                         pos.height])
+
         plot_vectors_in_subplot(ax, vectors_list[i])
-    
-    # Last row: line plots from CSV folders
+
+        ann   = vector_annotations[i]
+        label = (f"Num features: {ann['num_features']}\n"
+                 f"Num active features: {ann['num_active_features']}\n"
+                 f"Final loss: {ann['final_loss']}")
+        ax.text(1.02, 0.5, label,
+                transform=ax.transAxes,
+                ha="left", va="center", fontsize=10)
+
+    # --- bottom row: loss curves --------------------------------------------
     for idx in range(3):
-        ax = axes[2, idx]
-        plot_lines_from_folder(ax, csv_folders[idx], csv_labels[idx], metric_name=metric_name)
-    
+        plot_lines_from_folder(axes[2, idx],
+                               csv_folders[idx],
+                               csv_labels[idx],
+                               metric_name=metric_name)
+
     plt.tight_layout()
-    plt.savefig(output_file, format="pdf")
+    # plt.savefig(output_file, format="pdf")
     plt.show()
 
 
-# Example usage:
+# --------------------------------------------------------------------------
+#  Example usage
+# --------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Example vector dictionaries for the first 6 subplots (replace with your actual data)
+    # ---------- dummy vectors (replace with real data) ----------
     vectors_example = [
-        {
-            "(1, 0, 0)": [0.9102323055267334, -0.28037720918655396],
-            "(0, 1, 0)": [0.008074425160884857, 0.9957887530326843],
-            "(0, 0, 1)": [-0.740456759929657, -0.3839344382286072]
-        },
-        {
-            "(0, 0, 1, 0)": [-1.1671184301376343, -0.06306133419275284],
-            "(0, 0, 0, 1)": [0.0007617459050379694, -1.1354484558105469],
-            "(0, 1, 0, 0)": [0.08999386429786682, 0.8271757364273071],
-            "(1, 0, 0, 0)": [1.0018384456634521, -0.23353418707847595]
-        },
-        {
-            "(0, 0, 0, 0, 1)": [0.02192610688507557, -2.0216991901397705],
-            "(0, 0, 0, 1, 0)": [-1.173049807548523, -0.26479917764663696],
-            "(0, 0, 1, 0, 0)": [0.17389777302742004, -0.2835731506347656],
-            "(1, 0, 0, 0, 0)": [0.8847442269325256, -0.3996647894382477],
-            "(0, 1, 0, 0, 0)": [0.14500993490219116, 1.0995112657546997]
-        },
-        {
-            "(0, 0, 1)": [-0.33713048696517944, 0.5424337387084961],
-            "(0, 1, 0)": [0.898219108581543, 1.3243781328201294],
-            "(1, 0, 0)": [0.8060863018035889, -0.3235540986061096]
-        },
-        {
-            "(0, 0, 1, 0)": [-0.9523501992225647, -0.05801386013627052],
-            "(1, 0, 0, 0)": [0.48521849513053894, -0.9395773410797119],
-            "(0, 0, 0, 1)": [-0.024101126939058304, -0.26713791489601135],
-            "(0, 1, 0, 0)": [0.6478540897369385, 0.811893105506897]
-        },
-        {
-            "(0, 0, 0, 0, 1)": [0.02192610688507557, -2.0216991901397705],
-            "(0, 0, 0, 1, 0)": [-1.173049807548523, -0.26479917764663696],
-            "(0, 0, 1, 0, 0)": [0.17389777302742004, -0.2835731506347656],
-            "(1, 0, 0, 0, 0)": [0.8847442269325256, -0.3996647894382477],
-            "(0, 1, 0, 0, 0)": [0.14500993490219116, 1.0995112657546997]
-        },
+        {"(1, 0, 0)": [0.91, -0.28],
+         "(0, 1, 0)": [0.01, 0.99],
+         "(0, 0, 1)": [-0.74, -0.38]},
+        {"(0, 0, 1, 0)": [-1.17, -0.06],
+         "(0, 0, 0, 1)": [0.00, -1.13],
+         "(0, 1, 0, 0)": [0.09, 0.83],
+         "(1, 0, 0, 0)": [1.00, -0.23]},
+        {"(0, 0, 0, 0, 1)": [0.50806558, -2.10432434],
+         "(0, 0, 0, 1, 0)": [-1.51411092, -0.84883428],
+         "(0, 0, 1, 0, 0)": [-0.71743095, 1.29326510],
+         "(0, 1, 0, 0, 0)": [0.73846961, 2.54762864],
+         "(1, 0, 0, 0, 0)": [2.05495167, 0.02076192]},
+        {"(0, 0, 1)": [-0.34, 0.54],
+         "(0, 1, 0)": [0.90, 1.32],
+         "(1, 0, 0)": [0.81, -0.32]},
+        {"(0, 0, 1, 0)": [-0.95, -0.06],
+         "(1, 0, 0, 0)": [0.49, -0.94],
+         "(0, 0, 0, 1)": [-0.02, -0.27],
+         "(0, 1, 0, 0)": [0.65, 0.81]},
+        {"(0, 0, 0, 0, 1)": [0.02, -2.02],
+         "(0, 0, 0, 1, 0)": [-1.17, -0.26],
+         "(0, 0, 1, 0, 0)": [0.17, -0.28],
+         "(1, 0, 0, 0, 0)": [0.88, -0.40],
+         "(0, 1, 0, 0, 0)": [0.15, 1.10]},
     ]
-    
-    # List of 3 folders, each containing CSV files for one experiment.
-    script_dir = os.path.dirname(__file__)
-    csv_folder1 = os.path.join(script_dir, "..", "Data", "NinePlots", "3")
-    csv_folder2 = os.path.join(script_dir, "..", "Data", "NinePlots", "4")
-    csv_folder3 = os.path.join(script_dir, "..", "Data", "NinePlots", "5")
-    csv_folders = [os.path.normpath(csv_folder1), os.path.normpath(csv_folder2), os.path.normpath(csv_folder3)]
-    
-    # Labels corresponding to the 3 experiments/folders
-    csv_labels = ["Input dim. 3", "Input dim. 4", "Input dim. 5"]
-    
-    # Output file path for the combined PDF
-    output_pdf = os.path.join(script_dir, "..", "Graphs", "NinePlots", "combined_figure.pdf")
+
+    # ---------- annotation blocks ----------
+    vector_annotations = [
+        {"num_features": 3, "num_active_features": 3, "final_loss": 0.398},
+        {"num_features": 4, "num_active_features": 4, "final_loss": 0.550},
+        {"num_features": 5, "num_active_features": 5, "final_loss": 0.569},
+        {"num_features": 3, "num_active_features": 3, "final_loss": 0.856},
+        {"num_features": 4, "num_active_features": 3, "final_loss": 0.743},
+        {"num_features": 5, "num_active_features": 4, "final_loss": 0.790},
+    ]
+
+    # ---------- CSV folders & labels (adjust paths as needed) ----------
+    script_dir  = os.path.dirname(__file__)
+    csv_folders = [os.path.join(script_dir, "..", "Data", "NinePlots", d)
+                   for d in ("3", "4", "5")]
+    csv_labels  = ["Input dim. 3", "Input dim. 4", "Input dim. 5"]
+
+    output_pdf  = os.path.join(script_dir, "..", "Graphs", "NinePlots",
+                               "combined_figure.pdf")
     os.makedirs(os.path.dirname(output_pdf), exist_ok=True)
-    
+
+    # ---------- call the plotter ----------
     create_combined_figure(
         vectors_list=vectors_example,
         csv_folders=csv_folders,
         csv_labels=csv_labels,
         metric_name="Loss",
-        output_file=output_pdf
+        vector_annotations=vector_annotations,
+        output_file=output_pdf,
+        top_horizontal_shift=0.0   # tweak this until alignment looks perfect
     )
