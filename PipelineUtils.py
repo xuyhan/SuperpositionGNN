@@ -3,6 +3,8 @@ import json
 import torch
 import numpy as np
 from datetime import datetime
+from typing import List, Dict
+import itertools
 
 def convert_keys_to_str(obj):
     """
@@ -217,3 +219,21 @@ def get_hidden_dims(mode, **kwargs):
     
     else:
         raise ValueError("Unsupported mode: {}. Use 'simple', 'motif', or 'count'.".format(mode))
+    
+
+    
+def mean_std_global(stats: List[Dict[str, List[float]]]) -> float:
+    """
+    Compute the overall mean of all floats in all 'std' vectors.
+    
+    Args:
+        stats: List of dicts, each with a 'std' key whose value is a list of floats.
+        
+    Returns:
+        A single float: the mean of all std values.
+    """
+    # Flatten all std lists into one sequence
+    all_values = list(itertools.chain.from_iterable(entry['std'] for entry in stats))
+    if not all_values:
+        return 0.0
+    return sum(all_values) / len(all_values)

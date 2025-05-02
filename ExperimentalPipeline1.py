@@ -7,8 +7,7 @@ from Trainer import Trainer
 from GraphGeneration import sparcity_calculator
 import numpy as np
 import pandas as pd
-from PipelineUtils import convert_keys_to_str, get_all_elements, make_readable_results, determine_percentage_of_collapsed, get_hidden_dims
-
+from PipelineUtils import *
 
 def run_single_experiment(experiment_config):
     # Check for required keys.
@@ -27,7 +26,9 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=15)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=5)
+    # Condense empty graph stats
+    empty_graph_stats = mean_std_global(empty_graph_stats)
     print(f"Results: {results}")
 
     # Convert the raw results into a human-readable format.
@@ -98,7 +99,7 @@ def main(specific_rows, Mode):
         "use_weighting": True,
         "importance": (15.0, 10.0),
         "phase1_epochs": 0,
-        "phase2_epochs": 80,
+        "phase2_epochs": 50,
         "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         "model_type": "GIN",         # e.g. "GCN" or "GIN"
         "loss": "BCE",
@@ -233,15 +234,15 @@ def main(specific_rows, Mode):
                         configs.append(config.copy())
                 elif int(row['Feature_num']) == 12:
                     if row['Pooling'] == 'gm':
-                        config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['log_dir'] = (f"runs/SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                              f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
-                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['file_path'] = (f"SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                                f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
                         configs.append(config)
                     else:
-                        config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['log_dir'] = (f"runs/SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                              f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
-                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['file_path'] = (f"SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                                f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
                         configs.append(config)
                 elif int(row['Feature_num']) == 3:

@@ -181,8 +181,7 @@ class Trainer:
         if empty_graph_repr:
             mean, std = Trainer.aggregate_embeddings_with_stats(empty_graph_repr)
             empty_graph_stats = {'mean': mean, 'std': std}
-            # For debugging or logging, you might print or store these stats.
-            # Example: print(f"Empty Graph Embedding Stats: Mean {mean.tolist()}, Std {std.tolist()}")
+
 
         # Compute average predictions for pure graphs as before.
         avg_predictions = {}
