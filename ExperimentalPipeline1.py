@@ -26,13 +26,14 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=5)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=50)
     # Condense empty graph stats
     empty_graph_stats = mean_std_global(empty_graph_stats)
     print(f"Results: {results}")
 
     # Convert the raw results into a human-readable format.
     readable_results = make_readable_results(results, all_average_embeddings, Trainer)
+    sv_ratio = mean_singular_values(readable_results)
 
     # Determine the percentage of collapsed embeddings.
     collapsed_percentage = determine_percentage_of_collapsed(readable_results)
@@ -62,7 +63,8 @@ def run_single_experiment(experiment_config):
     output = {
         "experiment_config": experiment_config,
         "sparcity": sparcity,
-        "empty_graph_stats": empty_graph_stats,
+        "empty graph stats": empty_graph_stats,
+        "singular value ratio": sv_ratio,
         "summary format:": "Key: (Num of active features, Num of accurate feature, Geometry, Collapsed). Loss, s.d. Loss, Count",
         "collapsed percentage": collapsed_percentage,
         "summary": summary,
@@ -200,11 +202,15 @@ def main(specific_rows, Mode):
                 config['num_categories'] = feature_val
                 config['in_dim'] = feature_val
                 config['hidden_dims'] = hidden_dims
+                if feature_val < 18:
+                    config['p'] = feature_val/18
+                else:
+                    config['p'] = 1.0
 
                 # Use a default naming convention for specify.
-                config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/"
+                config['log_dir'] = (f"runs/SV/{row['Loss']}/{int(row['Depth'])}/"
                                      f"{row['Architecture']}/{row['Type']}/{row['Feature_num']}/specified")
-                config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/"
+                config['file_path'] = (f"SV/{row['Loss']}/{int(row['Depth'])}/"
                                        f"{row['Architecture']}/{row['Type']}/{row['Feature_num']}/specified")
                 configs.append(config.copy())
             else:
@@ -234,15 +240,15 @@ def main(specific_rows, Mode):
                         configs.append(config.copy())
                 elif int(row['Feature_num']) == 12:
                     if row['Pooling'] == 'gm':
-                        config['log_dir'] = (f"runs/SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                              f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
-                        config['file_path'] = (f"SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                                f"{row['Type']}/p_gm={row['Power']}/{int(row['Feature_num'])}/high")
                         configs.append(config)
                     else:
-                        config['log_dir'] = (f"runs/SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['log_dir'] = (f"runs/T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                              f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
-                        config['file_path'] = (f"SD/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
+                        config['file_path'] = (f"T/{row['Loss']}/{int(row['Depth'])}/{row['Architecture']}/"
                                                f"{row['Type']}/{row['Pooling']}/{int(row['Feature_num'])}/high")
                         configs.append(config)
                 elif int(row['Feature_num']) == 3:

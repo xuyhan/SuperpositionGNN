@@ -3,7 +3,7 @@ import json
 import torch
 import numpy as np
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple, Any
 import itertools
 
 def convert_keys_to_str(obj):
@@ -237,3 +237,48 @@ def mean_std_global(stats: List[Dict[str, List[float]]]) -> float:
     if not all_values:
         return 0.0
     return sum(all_values) / len(all_values)
+
+
+
+def mean_singular_values(results: List[Dict[str, Any]]) -> Tuple[float, float]:
+    """
+    Compute the mean of the highest and second-highest singular values,
+    but only for entries satisfying:
+      - if Num of features > 6:
+            (Num of features - 4) < Num of active features
+      - else:
+            (Num of features - 3) < Num of active features
+
+    Args:
+        results: List of dicts, each expected to have at least:
+                   - "Num of features": int
+                   - "Num of active features": int
+                   - "Singular values": List[float]
+
+    Returns:
+        (mean_highest, mean_second)
+    """
+    highest = []
+    second  = []
+
+    for entry in results:
+        n_feat = entry.get("Num of features", 0)
+        n_active = entry.get("Num of active features", 0)
+
+        # choose the correct threshold
+        threshold = n_feat - 4 if n_feat > 6 else n_feat - 3
+
+        if threshold < n_active:
+            sv = entry.get("Singular values", [])
+            if len(sv) >= 1:
+                highest.append(sv[0])
+            if len(sv) >= 2:
+                second.append(sv[1])
+
+    if not highest:
+        return 0.0, 0.0
+
+    mean_highest = sum(highest) / len(highest)
+    mean_second  = sum(second)  / len(second) if second else 0.0
+
+    return mean_highest, mean_second
