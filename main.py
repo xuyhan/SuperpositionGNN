@@ -8,8 +8,8 @@ from Runner import run_multiple_experiments
 from ExperimentalPipeline1 import main
 
 if __name__ == '__main__':
-    specific_rows = [202]
-    Mode = "simple"
+    specific_rows = [3, 17]
+    Mode = "count"
     main(specific_rows, Mode)
 
 
