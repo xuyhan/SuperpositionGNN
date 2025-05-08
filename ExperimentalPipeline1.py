@@ -152,7 +152,7 @@ def main(specific_rows, Mode):
         "num_categories": 3,        # REQUIRED: motif does not contribute to the number of categories
         "p": 0.3,
         "p_count": 0.9,  
-        "num_nodes": 20,
+        "num_nodes": 10,
         "num_train_samples": 5000,
         "num_test_samples": 1500,
         "batch_size": 4,
@@ -289,8 +289,8 @@ def main(specific_rows, Mode):
             
             config['model_type'] = row['Architecture']
             config['pooling'] = row['Pooling']
-            config['log_dir'] = f"runs/T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
-            config['file_path'] = f"T/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
+            config['log_dir'] = f"runs/evo/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
+            config['file_path'] = f"evo/count/{row['Architecture']}/{row['Pooling']}/{row['Hidden']}"
             
             # Use the helper function for count mode.
             config['hidden_dims'] = get_hidden_dims("count", hidden=row['Hidden'])

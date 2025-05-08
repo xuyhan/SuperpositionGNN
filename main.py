@@ -9,7 +9,7 @@ from ExperimentalPipeline1 import main
 
 if __name__ == '__main__':
     specific_rows = [3, 17]
-    Mode = "count"
+    Mode = "motif"
     main(specific_rows, Mode)
 
 

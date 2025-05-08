@@ -6,7 +6,6 @@ import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import networkx as nx
-from matplotlib.widgets import Slider, Button
 
 # PyG imports
 from torch_geometric.data import Data
@@ -14,8 +13,8 @@ from torch_geometric.data import Data
 # -----------------------------
 # Import model and data generator classes
 # -----------------------------
-from Model import GNNModel  # This file defines both GCN and GIN variants.
-from GraphGeneration import SyntheticGraphDataGenerator  # Contains the motif generator.
+from Model import GNNModel
+from GraphGeneration import SyntheticGraphDataGenerator
 
 # -----------------------------
 # Helper functions
@@ -26,29 +25,20 @@ def load_experiment_results(file_path):
     return data
 
 def choose_best_model_key(data):
-    """
-    Chooses the best model key from the summary (lowest average loss).
-    Assumes data["summary"] maps a key string to a list where the first element is avg_loss.
-    """
     summary = data["summary"]
     best_key = None
     best_loss = float('inf')
     for k, v in summary.items():
-        avg_loss = v[0]  # take the first element as the average loss
+        avg_loss = v[0]
         if avg_loss < best_loss:
             best_loss = avg_loss
             best_key = k
     return best_key
 
 def assign_weights_from_dict(model, weight_dict):
-    """
-    Assigns weights from the dictionary to the model.
-    The weight_dict keys must match the model.state_dict() keys.
-    """
     state_dict = model.state_dict()
     for key, value in weight_dict.items():
         if key in state_dict:
-            # Convert list to tensor using the same type and device.
             tensor_value = torch.tensor(value, dtype=state_dict[key].dtype, device=state_dict[key].device)
             state_dict[key].copy_(tensor_value)
         else:
@@ -59,14 +49,9 @@ def assign_weights_from_dict(model, weight_dict):
 # Graph construction for "simple" mode
 # -----------------------------
 def linear_graph(vectors):
-    """
-    Constructs a simple linear graph (with self-loops) from a list of vectors.
-    Returns: PyG Data, a NetworkX graph, and node positions.
-    """
     num_nodes = len(vectors)
     x = torch.tensor(vectors, dtype=torch.float)
     edges = []
-    # Add self-loops and chain edges.
     for i in range(num_nodes):
         edges.append((i, i))
         if i > 0:
@@ -75,7 +60,6 @@ def linear_graph(vectors):
     edge_index = torch.tensor(edges, dtype=torch.long).t().contiguous()
     batch = torch.zeros(num_nodes, dtype=torch.long)
     data = Data(x=x, edge_index=edge_index, batch=batch)
-    # Use a simple path graph (which does not have self-loops) for visualization.
     G = nx.path_graph(num_nodes)
     pos = nx.spring_layout(G, seed=42)
     return data, G, pos
@@ -84,10 +68,6 @@ def linear_graph(vectors):
 # Compute hidden embeddings layer-by-layer
 # -----------------------------
 def compute_hidden_embeddings(model, data):
-    """
-    Computes node hidden embeddings for each conv layer.
-    For GIN layers, note that the returned value is the final output after the internal MLP.
-    """
     x = data.x.clone()
     embeddings_by_layer = [x.detach().cpu().numpy()]
     for i, conv in enumerate(model.convs):
@@ -98,173 +78,195 @@ def compute_hidden_embeddings(model, data):
     return embeddings_by_layer
 
 # -----------------------------
-# Animation code: show arrows for 2D embeddings (except for layer 0)
+# Plot all layers in subplots for a single graph
 # -----------------------------
-def animate_graph(embeddings_by_layer, G, default_pos):
-    """
-    Animates the evolution of node embeddings.
-    
-    For layer 0 (input features), text annotations are shown.
-    For later layers, if the embeddings are 2D, an arrow (in red) is drawn for each node.
-    The arrow originates from the fixed node position (default_pos) and is scaled for visibility.
-    
-    Self-loops are not drawn.
-    """
-    fig, ax = plt.subplots(figsize=(8, 6))
-    plt.subplots_adjust(bottom=0.2)
-    
-    def draw_graph(current_layer):
-        ax.clear()
-        # Draw graph edges and nodes using the fixed layout.
-        nx.draw_networkx_edges(G, default_pos, ax=ax)
-        nx.draw_networkx_nodes(G, default_pos, ax=ax, node_color='lightblue', node_size=500)
-        ax.set_title(f"Layer {current_layer}")
-        ax.axis('off')
-        
-        layer_emb = embeddings_by_layer[current_layer]
-        # For the first layer, we show text annotations.
-        if current_layer == 0:
-            for i, (pos_x, pos_y) in default_pos.items():
-                text_str = "(" + ", ".join(f"{float(v):.2f}" for v in layer_emb[i]) + ")"
-                ax.text(pos_x, pos_y, text_str, fontsize=9, ha='right', va='bottom')
-        else:
-            # If the embeddings are 2D, draw an arrow for each node.
-            if layer_emb.ndim == 2 and layer_emb.shape[1] == 2:
-                scale = 0.03  # Scale factor for arrow length.
-                for i, (pos_x, pos_y) in default_pos.items():
-                    vec = layer_emb[i]
-                    dx = vec[0] * scale
-                    dy = vec[1] * scale
-                    ax.arrow(pos_x, pos_y, dx, dy, head_width=0.05, head_length=0.1, fc='red', ec='red')
-            else:
-                # Otherwise, fallback to text annotations.
-                for i, (pos_x, pos_y) in default_pos.items():
-                    text_str = "(" + ", ".join(f"{float(v):.2f}" for v in layer_emb[i]) + ")"
-                    ax.text(pos_x, pos_y, text_str, fontsize=9, ha='right', va='bottom')
-    
-    draw_graph(0)
+def plot_all_layers(embeddings_by_layer, G, default_pos, ax_row=None, scale=0.01):
     num_layers = len(embeddings_by_layer)
-    
-    slider_ax = plt.axes([0.2, 0.05, 0.6, 0.03])
-    layer_slider = Slider(slider_ax, 'Layer', 0, num_layers - 1, valinit=0, valstep=1)
-    
-    def update(val):
-        current_layer = int(layer_slider.val)
-        draw_graph(current_layer)
-        fig.canvas.draw_idle()
-    
-    layer_slider.on_changed(update)
-    
-    button_ax = plt.axes([0.85, 0.025, 0.1, 0.04])
-    next_button = Button(button_ax, 'Next')
-    
-    def next_layer(event):
-        current = int(layer_slider.val)
-        new_val = (current + 1) % num_layers
-        layer_slider.set_val(new_val)
-    next_button.on_clicked(next_layer)
-    
+    if ax_row is None:
+        fig, axes = plt.subplots(1, num_layers, figsize=(4 * num_layers, 4))
+        if num_layers == 1:
+            axes = [axes]
+    else:
+        axes = ax_row
+    for layer_idx in range(num_layers):
+        ax = axes[layer_idx]
+        emb = embeddings_by_layer[layer_idx]
+        nx.draw_networkx_edges(G, default_pos, ax=ax)
+        nx.draw_networkx_nodes(G, default_pos, ax=ax, node_color='gray', node_size=150)
+        ax.set_title(f"L{layer_idx}")
+        ax.axis('off')
+        if emb.ndim == 2 and emb.shape[1] == 2:
+            for i, (x_pos, y_pos) in default_pos.items():
+                dx, dy = emb[i] * scale
+                ax.arrow(x_pos, y_pos, dx, dy, head_width=0.05, head_length=0.1, fc='black', ec='black')
+ 
+
+# -----------------------------
+# Plot grid for count mode: one row per graph type
+# -----------------------------
+def plot_count_mode_grid(model, generator):
+    sample = generator.generate_single_graph()
+    num_classes = sample.y.shape[-1]
+    collected = {}
+    while len(collected) < num_classes:
+        data = generator.generate_single_graph()
+        label = int(torch.argmax(data.y).item())
+        if label not in collected:
+            collected[label] = data
+    embeddings_list, Gs, poses = [], [], []
+    for label in sorted(collected.keys()):
+        data = collected[label]
+        embeddings = compute_hidden_embeddings(model, data)
+        embeddings_list.append(embeddings)
+        G = nx.Graph()
+        idxs = data.edge_index.numpy()
+        G.add_edges_from(list(zip(idxs[0], idxs[1])))
+        G.remove_edges_from(list(nx.selfloop_edges(G)))
+        pos = nx.spring_layout(G, seed=42)
+        Gs.append(G)
+        poses.append(pos)
+    num_rows = len(embeddings_list)
+    num_layers = len(embeddings_list[0])
+    fig, axes = plt.subplots(num_rows, num_layers, figsize=(4 * num_layers, 4 * num_rows))
+    if num_rows == 1:
+        axes = np.expand_dims(axes, 0)
+    if num_layers == 1:
+        axes = np.expand_dims(axes, 1)
+    for r in range(num_rows):
+        for c in range(num_layers):
+            graph_type = ["More Red", "More Blue", "Same Red and Blue"]
+            ax = axes[r, c]
+            emb = embeddings_list[r][c]
+            plot_all_layers([emb], Gs[r], poses[r], ax_row=[ax])
+            ax.set_title(f"{graph_type[r]}, GNN Layer {c}")
+    plt.tight_layout()
+    plt.savefig("count_mode_grid.png", dpi=300)
     plt.show()
 
 # -----------------------------
-# Main script: auto-detect mode and GNN type from file path
+# Plot grid for motif mode: one row per motif type + pooled vector arrow
+# -----------------------------
+def plot_motif_mode_grid(model, generator):
+    # Set scale for arrows
+    scales = [0.1, 0.4, 0.01]
+    sample = generator.generate_single_graph()
+    num_types = sample.y.shape[-1]
+    collected = {}
+    while len(collected) < num_types:
+        data = generator.generate_single_graph()
+        label = int(torch.argmax(data.y).item())
+        if label not in collected:
+            collected[label] = data
+    embeddings_list, Gs, poses = [], [], []
+    for label in sorted(collected.keys()):
+        data = collected[label]
+        embeddings = compute_hidden_embeddings(model, data)
+        embeddings_list.append(embeddings)
+        G = nx.Graph()
+        idxs = data.edge_index.numpy()
+        G.add_edges_from(list(zip(idxs[0], idxs[1])))
+        G.remove_edges_from(list(nx.selfloop_edges(G)))
+        pos = nx.spring_layout(G, seed=42)
+        Gs.append(G)
+        poses.append(pos)
+    num_rows = len(embeddings_list)
+    num_layers = len(embeddings_list[0])
+    # +1 column for pooled vector arrow
+    fig, axes = plt.subplots(num_rows, num_layers + 1, figsize=(4 * (num_layers + 1), 4 * num_rows))
+    if num_rows == 1:
+        axes = np.expand_dims(axes, 0)
+    if num_layers + 1 == 1:
+        axes = np.expand_dims(axes, 1)
+    for r in range(num_rows):
+        print(r)
+        for c in range(num_layers):
+            ax = axes[r, c]
+            emb = embeddings_list[r][c]
+            plot_all_layers([emb], Gs[r], poses[r], ax_row=[ax], scale = scales[c])
+            motif_name = ["Triangle", "Square", "Pentagon"]
+            ax.set_title(f"Motif {motif_name[r]}, Layer {c}")
+        # pooled vector arrow in last column
+        pooled = embeddings_list[r][-1].mean(axis=0)
+        ax_pool = axes[r, num_layers]
+        # coordinate axes
+        ax_pool.axhline(0, color='black', linewidth=1)
+        ax_pool.axvline(0, color='black', linewidth=1)
+        # arrow from origin
+        x_end, y_end = pooled[0], pooled[1]
+        ax_pool.arrow(0, 0, x_end, y_end, head_width=0.05, head_length=0.1, fc='black', ec='black')
+        lim = max(abs(x_end), abs(y_end)) * 1.2
+        ax_pool.set_xlim(-lim, lim)
+        ax_pool.set_ylim(-lim, lim)
+        ax_pool.set_aspect('equal')
+        motif_name = ["Triangle", "Square", "Pentagon"]
+        ax_pool.set_title(f"Motif {motif_name[r]}, Pooled")
+        #ax_pool.axis('off')
+    plt.tight_layout()
+    # plt.savefig("motif_mode_grid.png", dpi=300)
+    plt.show()
+
+# -----------------------------
+# Main script: auto-detect mode and GNN type
 # -----------------------------
 def main():
-    # Example file path; change this value as needed.
-    file_path = "experiment_results/exp_count_GCN_3cats_2hidden_20250310_111122.json"
-    
-    # Automatically detect mode and GNN type from the file path.
-    mode = "motif" if "motif" in file_path.lower() else ("count" if "count" in file_path.lower() else 
-                    ("simple" if "simple" in file_path.lower() else "unknown"))
+    file_path = "experiment_results/motif/GIN/mean/2/exp_motif_GIN_0cats_2hidden_20250507_162229.json" 
+    # file_path = "experiment_results/evo/count/GCN/mean/2/exp_count_GCN_3cats_2hidden_20250507_151931.json"
+    # file_path = "experiment_results/evo/count/GIN/mean/2/exp_count_GIN_3cats_2hidden_20250507_151241.json"
+    mode = (
+        "motif" if "motif" in file_path.lower() else
+        ("count" if "count" in file_path.lower() else
+        ("simple" if "simple" in file_path.lower() else "unknown"))
+    )
     gnn_type = "GIN" if "gin" in file_path.lower() else "GCN"
     print("Detected mode:", mode)
     print("Detected GNN type:", gnn_type)
-    
-    # Load experiment results and select the best model.
     data_json = load_experiment_results(file_path)
-    best_model_key = choose_best_model_key(data_json)
-    print("Selected best model key:", best_model_key)
-    weight_dict = data_json["model summary"][best_model_key]
-    
-    # Get experiment configuration.
+    best_key = choose_best_model_key(data_json)
+    print("Selected best model key:", best_key)
+    weight_dict = data_json["model summary"][best_key]
     exp_config = data_json["experiment_config"]
-    # For motif mode, we assume constant node features (dim=1) and output is motif_dim.
     if mode == "motif":
         in_dim = exp_config.get("in_dim", 1)
         out_dim = exp_config.get("motif_dim", 3)
     elif mode == "simple":
         in_dim = exp_config["in_dim"]
-        out_dim = exp_config["num_categories"] 
+        out_dim = exp_config["num_categories"]
     elif mode == "count":
         in_dim = exp_config.get("in_dim", 1)
         out_dim = exp_config.get("num_categories", 3)
-    
-    # Instantiate the model with the detected GNN type.
-    model = GNNModel(model_type=gnn_type,
-                     in_dim=in_dim,
-                     hidden_dims=exp_config["hidden_dims"],
-                     out_dim=out_dim,
-                     freeze_final=True,
-                     pooling=exp_config["pooling"])
-    
-    # Load weights.
+    model = GNNModel(
+        model_type=gnn_type,
+        in_dim=in_dim,
+        hidden_dims=exp_config["hidden_dims"],
+        out_dim=out_dim,
+        freeze_final=True,
+        pooling=exp_config["pooling"]
+    )
     assign_weights_from_dict(model, weight_dict)
     model.eval()
-    
-    # Create a graph.
     if mode == "motif":
-        # Use the SyntheticGraphDataGenerator for motif graphs.
         generator = SyntheticGraphDataGenerator(
             mode="motif",
             num_categories=exp_config.get("num_categories", 3),
             p=exp_config.get("p", 0.25),
             num_nodes=exp_config.get("num_nodes", 20),
             chain_length_min=exp_config.get("chain_length_min", 2),
-            chain_length_max=exp_config.get("chain_length_max", 7),
+            chain_length_max = 4, # For plotting purposes
             motif_dim=exp_config.get("motif_dim", 3)
         )
-        data = generator.generate_single_graph()
-        # Convert the edge index to a NetworkX graph.
-        G = nx.Graph()
-        edge_index = data.edge_index.numpy()
-        edges = list(zip(edge_index[0], edge_index[1]))
-        G.add_edges_from(edges)
-        # Remove self-loops.
-        G.remove_edges_from(list(nx.selfloop_edges(G)))
-        # Use a spring layout as a default.
-        default_pos = nx.spring_layout(G, seed=42)
+        plot_motif_mode_grid(model, generator)
     elif mode == "simple":
-        # For simple mode, use a predefined linear graph.
-        vectors = ((0, 0, 0, 0),
-                   (0, 0, 0, 0), 
-                   (1, 0, 0, 0), 
-                   (1, 0, 0, 0), 
-                   (0, 0, 0, 0), 
-                   (0, 0, 0, 0))
+        vectors = ((0, 0, 0, 0), (0, 0, 0, 0), (1, 0, 0, 0), (1, 0, 0, 0), (0, 0, 0, 0), (0, 0, 0, 0))
         data, G, default_pos = linear_graph(vectors)
+        embeddings_by_layer = compute_hidden_embeddings(model, data)
+        plot_all_layers(embeddings_by_layer, G, default_pos)
     elif mode == "count":
-        # Use the SyntheticGraphDataGenerator for count graphs.
         generator = SyntheticGraphDataGenerator(
             mode="count",
             num_nodes=exp_config.get("num_nodes", 20),
             p_count=exp_config.get("p_count", 0.9)
         )
-        data = generator.generate_single_graph()
-        # Convert the edge index to a NetworkX graph.
-        G = nx.Graph()
-        edge_index = data.edge_index.numpy()
-        edges = list(zip(edge_index[0], edge_index[1]))
-        G.add_edges_from(edges)
-        # Remove self-loops.
-        G.remove_edges_from(list(nx.selfloop_edges(G)))
-        # Use a spring layout as a default.
-        default_pos = nx.spring_layout(G, seed=42)
-    
-    # Compute the hidden embeddings layer-by-layer.
-    embeddings_by_layer = compute_hidden_embeddings(model, data)
-    
-    # Animate the evolution of node embeddings.
-    animate_graph(embeddings_by_layer, G, default_pos)
+        plot_count_mode_grid(model, generator)
 
 if __name__ == "__main__":
     main()
