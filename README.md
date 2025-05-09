@@ -1,9 +1,21 @@
-# SuperpositionGNN
+SuperpositionGNN
 
-A framework for generating synthetic graphs, defining and training Graph Neural Network (GNN) architectures, running configurable experiments, and visualizing and analyzing results.
+Code accompanying the paper "Superposition in GNNs"
+Lukas Pertl, supervised by Pietro Lio, May 6, 2025
+
+A framework implementing the synthetic graph experiments, GNN architectures, and geometric analyses described in the paper. This repository contains all scripts and utilities to reproduce the key findings:
+
+Superposition via compression and the impact of pooling functions
+
+Topology-driven superposition without explicit bottlenecks
+
+Metastable low-rank minima in GIN models and hyperplane phenomena
+
+Empirical studies on real-world binary classification tasks
 
 ## Table of Contents
 
+* [Paper]
 * [Introduction](#introduction)
 * [Features](#features)
 * [Installation](#installation)
@@ -23,6 +35,21 @@ A framework for generating synthetic graphs, defining and training Graph Neural 
 * [Contributing](#contributing)
 * [License](#license)
 * [Contact](#contact)
+
+## Paper
+
+The full write-up of these experiments is available in the PDF:
+
+```
+???
+```
+
+It covers the definitions, datasets, theoretical background, and results (Figures, Tables) for:
+
+1. Compression-induced superposition and pooling effects
+2. Topology-driven superposition in motif tasks
+3. Metastable low-rank minima and hyperplane transitions
+4. Practical implications for real-world graph classification
 
 ## Introduction
 
@@ -175,3 +202,8 @@ This project is MIT licensed. See [LICENSE](LICENSE) for details.
 ## Contact
 
 Questions or issues? Open a GitHub issue or reach out to Lukas Pertl (@LukasPertl1) on GitHub.
+
+
+
+
+
