@@ -1,17 +1,14 @@
-SuperpositionGNN
+# SuperpositionGNN
 
-Code accompanying the paper "Superposition in GNNs"
-Lukas Pertl, supervised by Pietro Lio, May 6, 2025
+**Code accompanying the paper "Superposition in GNNs"**
+*Lukas Pertl, supervised by Pietro Lio, May 6, 2025*
 
 A framework implementing the synthetic graph experiments, GNN architectures, and geometric analyses described in the paper. This repository contains all scripts and utilities to reproduce the key findings:
 
-Superposition via compression and the impact of pooling functions
-
-Topology-driven superposition without explicit bottlenecks
-
-Metastable low-rank minima in GIN models and hyperplane phenomena
-
-Empirical studies on real-world binary classification tasks
+* Superposition via compression and the impact of pooling functions
+* Topology-driven superposition without explicit bottlenecks
+* Metastable low-rank minima in GIN models and hyperplane phenomena
+* Empirical studies on real-world binary classification tasks
 
 ## Table of Contents
 
