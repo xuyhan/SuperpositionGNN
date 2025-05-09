@@ -1,18 +1,17 @@
 # SuperpositionGNN
 
 **Code accompanying the paper "Superposition in GNNs"**
-*Lukas Pertl, supervised by Pietro Lio, May 6, 2025*
+*Lukas Pertl, supervised by Pietro Lio, June 2, 2025*
 
-A framework implementing the synthetic graph experiments, GNN architectures, and geometric analyses described in the paper. This repository contains all scripts and utilities to reproduce the key findings:
+A framework implementing the synthetic graph experiments, GNN architectures, and analysis on internal representations of the model that are descibed in the paper. This repository contains all scripts and utilities to reproduce the key findings:
 
 * Superposition via compression and the impact of pooling functions
 * Topology-driven superposition without explicit bottlenecks
 * Metastable low-rank minima in GIN models and hyperplane phenomena
-* Empirical studies on real-world binary classification tasks
 
 ## Table of Contents
 
-* [Paper]
+* [Paper](#paper)
 * [Introduction](#introduction)
 * [Features](#features)
 * [Installation](#installation)
@@ -50,16 +49,16 @@ It covers the definitions, datasets, theoretical background, and results (Figure
 
 ## Introduction
 
-**SuperpositionGNN** provides an end-to-end setup—from synthetic graph generation through model training, evaluation, and geometric analysis—ideal for studying GNN behavior under controlled conditions.
+**SuperpositionGNN** provides an end-to-end setup—from synthetic graph generation through model training, evaluation, and geometric analysis—ideal for studying GNN behavior--specifically the emergence of superposition--under controlled conditions.
 
 ## Features
 
 * Synthetic graph generators for chain, correlated, motif, combined, and count modes
 * Flexible GCN and GIN model definitions with custom pooling and equiangular frame initialization
 * Weighted loss handling and two-phase training (freeze/unfreeze final layer)
-* Configurable experimental pipelines via Excel or YAML inputs
+* Configurable experimental pipelines via Excel inputs
 * Automated logging to TensorBoard and JSON result exports
-* Geometry analysis: singular-value decomposition, collapsed embedding detection
+* Geometry analysis: singular-value decomposition, collapsed embedding detection, noise detection
 * Visualization helpers for static plots and animations
 
 ## Installation
@@ -84,11 +83,6 @@ pip install -r requirements.txt
    ```
 
    Uses `ExperimentalPipeline1.main()` to run specified rows and mode (e.g., motif).
-
-2. **Simple-mode training demo**:
-
-   * Uncomment and rename the second `__main__` block tag to `__main__ == '__main__'` (SIMPLE).
-   * Generates synthetic "simple" chain graphs, trains a GCN model for 5 epochs, evaluates, and plots 3D embeddings via `Visualizer.plot_avg_hidden_embeddings_3d()`.
 
 Modify parameters like `specific_rows` and `Mode` at the top of `main.py` as needed.
 
