@@ -150,7 +150,7 @@ def get_hidden_dims(mode, **kwargs):
     Raises:
         ValueError: If required parameters are missing or values are unsupported.
     """
-    if mode == "simple":
+    if mode in ["simple", "tox21"]:
         type_str = kwargs['type_str']
         if type_str.strip().lower() == "specify":
             # Parse the comma-separated string.

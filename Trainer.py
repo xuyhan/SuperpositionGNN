@@ -34,6 +34,8 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.config = config if config is not None else {}
+        out_dim = model.lin_out.out_features
+        self.thresholds = torch.full((out_dim,), 0.5, device=device) 
 
         # Initialize the SummaryWriter with a common log directory.
         log_dir = self.config.get("log_dir", None)
@@ -153,7 +155,11 @@ class Trainer:
                 total_samples += batch_size
 
                 probs = torch.sigmoid(logits)
-                pred = (probs > 0.5).float()
+                if self.config.get("per_label_thresholds", False):
+                    thr = self.thresholds.view(1, -1)                  # shape [1,out_dim]
+                    pred = (probs > thr).float()
+                else:
+                    pred = (probs > 0.5).float()
                 correct = (pred == target).float().mean(dim=1)
                 total_correct += correct.sum().item()
 
@@ -189,7 +195,7 @@ class Trainer:
             preds_tensor = torch.stack(preds)
             avg_pred = preds_tensor.float().mean(dim=0)
             avg_predictions[k] = avg_pred
-
+        # print(f"avg_predictions: {avg_predictions}")
         avg_embeddings = {}
         for k, reps in graph_repr_dict.items():
             avg_repr = torch.stack(reps).mean(dim=0)
@@ -350,3 +356,37 @@ class Trainer:
         U, singular_values, Vt = np.linalg.svd(embeddings, full_matrices=False)
     
         return rank, singular_values
+    
+    def _fit_thresholds(self, val_loader):
+        """
+        Finds per-assay thresholds that maximise F1 on a validation set.
+        Stores them in self.thresholds (shape [out_dim]).
+        """
+        from sklearn.metrics import precision_recall_curve
+        self.model.eval()
+        y_true, y_prob = [], []
+
+        with torch.no_grad():
+            for data in val_loader:
+                data = data.to(self.device)
+                logits = self.model(data.x, data.edge_index, data.batch)
+                y_prob.append(torch.sigmoid(logits).cpu())
+                y_true.append(data.y.float().cpu())
+
+        y_true = torch.cat(y_true).numpy()
+        y_prob = torch.cat(y_prob).numpy()
+
+        new_thr = np.zeros_like(self.thresholds.cpu().numpy())
+        for k in range(y_true.shape[1]):
+            mask = (y_true[:, k] >= 0)          # skip missing labels
+            if mask.sum() < 10 or (y_true[mask,k] == 1).sum() == 0:
+                new_thr[k] = 0.5                # fallback
+                continue
+            p,r,t = precision_recall_curve(y_true[mask,k], y_prob[mask,k])
+            f1 = 2*p*r / (p+r+1e-8)
+            new_thr[k] = float(t[f1.argmax()])  # best threshold
+            
+        scaled_thr = new_thr / 2.5            # ← divide each τ by 2.5
+        self.thresholds = torch.tensor(scaled_thr, device=self.device)
+
+        print("Fitted per-label thresholds (τ / 2.5):", self.thresholds.cpu().numpy())

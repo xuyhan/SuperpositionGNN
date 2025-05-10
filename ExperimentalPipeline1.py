@@ -26,7 +26,7 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=20)
+    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=2)
     # Condense empty graph stats
     # empty_graph_stats = mean_std_global(empty_graph_stats)
     print(f"Results: {results}")
@@ -176,6 +176,39 @@ def main(specific_rows, Mode):
         "save": True
     }
 
+    base_config_tox21 = {
+        "mode": "tox21",            # NEW
+        "root": "data/Tox21",       # download location
+        "batch_size": 32,
+        "train_split": 0.8,
+        "mask_missing": True,
+        "use_weighting": False,
+        "importance": (100.0, 100.0),
+
+        # Network-level params (tune freely in Excel)
+        "hidden_dims": [64, 64],
+        "num_categories": 12, 
+        "in_dim": 9,           # Tox21 has 9 features
+        "lr": 1e-3,
+        "model_type": "GCN",        # GCN also works
+        "loss": "BCE",
+        "pooling": "mean",
+        "gm_p": 1.0,
+        "device": torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+        "phase1_epochs": 0,
+        "phase2_epochs": 50,
+
+        # bookkeeping
+        "log_dir": "runs/tox21",
+        "file_path": "tox21",
+        "save": True,
+
+        # Avoid silly errors
+        "num_nodes": 20,          # Not used in Tox21
+        "p": 0.8,                 # Not used in Tox21
+
+    }
+
     # Adjust specific_rows according to your logic.
     specific_rows = [i - 2 for i in specific_rows]
     configs = []
@@ -294,6 +327,25 @@ def main(specific_rows, Mode):
             
             # Use the helper function for count mode.
             config['hidden_dims'] = get_hidden_dims("count", hidden=row['Hidden'])
+            configs.append(config)
+
+    elif Mode == "tox21":
+        df = pd.read_excel('ExperimentList/tox21_combinations.xlsx')
+        for idx in specific_rows:
+            row = df.iloc[idx]
+            config = base_config_tox21.copy()
+
+            # let you vary architecture / pooling / hidden dims via Excel
+            config["model_type"] = row["Architecture"]
+            config["pooling"]    = row["Pooling"]
+            __, hidden_dims = get_hidden_dims("tox21",
+                                                    feature_num=row['Feature_num'],
+                                                    depth=int(row['Depth']),
+                                                    type_str=row['Type'])
+            config["hidden_dims"] = hidden_dims
+
+            config["log_dir"]  = f"runs/tox21/{row['Architecture']}/{row['Pooling']}/{config['hidden_dims']}"
+            config["file_path"]= f"tox21/{row['Architecture']}/{row['Pooling']}/{config['hidden_dims']}"
             configs.append(config)
     
     # Loop through each configuration and run the corresponding experiment.
