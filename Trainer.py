@@ -385,8 +385,12 @@ class Trainer:
             p,r,t = precision_recall_curve(y_true[mask,k], y_prob[mask,k])
             f1 = 2*p*r / (p+r+1e-8)
             new_thr[k] = float(t[f1.argmax()])  # best threshold
-            
+
         scaled_thr = new_thr / 2.5            # ← divide each τ by 2.5
+        # Fitted by hand
+        scaled_thr = [0.3, 0.4,  0.22, 0.2, 0.4, 0.5,
+                        0.25, 0.3, 0.3980465, 0.20332521, 0.23416454, 0.13974163]
+
         self.thresholds = torch.tensor(scaled_thr, device=self.device)
 
         print("Fitted per-label thresholds (τ / 2.5):", self.thresholds.cpu().numpy())

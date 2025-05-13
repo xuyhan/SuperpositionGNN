@@ -151,7 +151,7 @@ def run_multiple_experiments(experiment_config, num_experiments=10):
         all_average_embeddings.append(avg_embeddings)
         empty_graph_stats_list.append(empty_stats)
 
-    return results, all_model_params, all_average_embeddings, empty_graph_stats_list
+    return results, all_model_params, all_average_embeddings, empty_graph_stats_list, avg_predictions
 
 
 # ───────────────────────────────── helper ───────────────────────────────────────

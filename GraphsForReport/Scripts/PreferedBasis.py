@@ -100,7 +100,7 @@ def plot_smoothed_normalized_histogram_from_folders(folders, file_pattern="*.txt
             folder_path = os.path.abspath(folder)
         label = os.path.basename(os.path.normpath(folder_path))
         
-        ax.plot(xs, ys, label=f"KDE: {label}", linewidth=2, color=cmap(i))
+        ax.plot(xs, ys, label=f"Components for: p = {label}", linewidth=2, color=cmap(i))
     
     # Note: Axes labels, title, legend and grid are set in the combined plot function.
     
@@ -152,10 +152,10 @@ def plot_normalized_basis(n, a, left_edge, right_edge, ax=None):
         ax = plt.gca()
     
     xs, ys = normalized_basis(n, a, left_edge, right_edge)
-    ax.plot(xs, ys, lw=2, color="darkred", label=f"Basis f(x) = (1-x²)^((n-3)/2), n={n}")
+    ax.plot(xs, ys, lw=2, color="darkred", label=f"Components for: Randomly alligned")
 
 #########################################
-# Combined Plot on the Same Graph
+# Combined Plot on the Same GraphVa
 #########################################
 if __name__ == "__main__":
     # Example folder paths provided as tuples of path components.
@@ -181,11 +181,11 @@ if __name__ == "__main__":
     plot_normalized_basis(n, a, left_edge, right_edge, ax=ax)
     
     # Set common labels, title, grid, and legend.
-    ax.set_xlabel("Value / x", fontsize=12)
-    ax.set_ylabel("Normalized Frequency / Density", fontsize=12)
-    ax.set_title("Combined Plot: Data KDE Curves and Normalized Basis Function", fontsize=14)
+    ax.set_xlabel("Component Value", fontsize=18)
+    ax.set_ylabel("Normalized Frequency", fontsize=18)
+    ax.set_title("Distribution of Embedding Vector Components (5D)", fontsize=22)
     ax.grid(True)
-    ax.legend(fontsize=10)
+    ax.legend(fontsize=16)
     
     plt.tight_layout()
     plt.show()

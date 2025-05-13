@@ -26,9 +26,10 @@ def run_single_experiment(experiment_config):
     print(f"\nRunning experiment: mode={experiment_config['mode']} | model_type={experiment_config['model_type']}")
     
     # Run the experiments.
-    results, all_model_params, all_average_embeddings, empty_graph_stats = run_multiple_experiments(experiment_config, num_experiments=2)
+    results, all_model_params, all_average_embeddings, empty_graph_stats, avg_predictions = run_multiple_experiments(experiment_config, num_experiments=1)
+    print(f"Average predictions: {avg_predictions}")
     # Condense empty graph stats
-    # empty_graph_stats = mean_std_global(empty_graph_stats)
+    empty_graph_stats = mean_std_global(empty_graph_stats)
     print(f"Results: {results}")
 
     # Convert the raw results into a human-readable format.

@@ -1,110 +1,77 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# --- (Re-run simulation for completeness) ---
 def random_unit_vector(n):
-    """
-    Generate a random unit vector of dimension n.
-    """
     vec = np.random.normal(0, 1, n)
     return vec / np.linalg.norm(vec)
 
 def one_hot_vector(n):
-    """
-    Generate a one-hot vector of dimension n.
-    Randomly choose one index to be 1, others 0.
-    """
     vec = np.zeros(n)
     index = np.random.randint(0, n)
     vec[index] = 1.0
     return vec
 
 def compute_angle(v1, v2):
-    """
-    Compute the angle between two vectors v1 and v2.
-    v1 is assumed to be a unit vector.
-    """
-    dot_product = np.dot(v1, v2)
-    norm_v2 = np.linalg.norm(v2)
-    # Clip cosine to valid range to avoid numerical issues
-    cos_theta = np.clip(dot_product / norm_v2, -1, 1)
+    cos_theta = np.clip(np.dot(v1, v2) / np.linalg.norm(v2), -1, 1)
     return np.arccos(cos_theta)
 
-# Define the range of dimensions (n) and s values (std deviation for Gaussian)
-dims = range(2, 21)  # Dimensionalities from 2 to 20
-s_values = np.linspace(0.001, 0.35, 50)  # 50 values between 0.001 and 0.2 for s
+dims = range(2, 21)
+s_values = np.linspace(0.001, 0.35, 50)
+n_runs = 100
 
-n_runs = 100  # Number of experiments for each (n, s) combination
-
-# Arrays to store the average angles
 results_random = np.zeros((len(s_values), len(dims)))
 results_onehot = np.zeros((len(s_values), len(dims)))
 
-# Loop over each combination of s and n
 for i, s in enumerate(s_values):
     for j, n in enumerate(dims):
-        angles_random = []
-        angles_onehot = []
+        angles_r, angles_o = [], []
         for _ in range(n_runs):
-            # --- Case 1: Original vector is random ---
-            orig_random = random_unit_vector(n)
-            new_random = np.empty(n)
-            for k in range(n):
-                gaussian_list = np.random.normal(0, s, 20)
-                max_gaussian = max(gaussian_list, key=abs)  # number with max abs value
-                if abs(orig_random[k]) >= abs(max_gaussian):
-                    new_random[k] = orig_random[k]
-                else:
-                    new_random[k] = max_gaussian
-            angle_random = compute_angle(orig_random, new_random)
-            angles_random.append(angle_random)
+            orig_r = random_unit_vector(n)
+            new_r = np.array([max(np.random.normal(0, s, 20), key=abs) 
+                              if abs(orig_r[k]) < max(np.random.normal(0, s, 20), key=abs) 
+                              else orig_r[k] for k in range(n)])
+            angles_r.append(compute_angle(orig_r, new_r))
             
-            # --- Case 2: Original vector is one-hot ---
-            orig_onehot = one_hot_vector(n)
-            new_onehot = np.empty(n)
-            for k in range(n):
-                gaussian_list = np.random.normal(0, s, 20)
-                max_gaussian = max(gaussian_list, key=abs)
-                if abs(orig_onehot[k]) >= abs(max_gaussian):
-                    new_onehot[k] = orig_onehot[k]
-                else:
-                    new_onehot[k] = max_gaussian
-            angle_onehot = compute_angle(orig_onehot, new_onehot)
-            angles_onehot.append(angle_onehot)
-        
-        # Average the angles over n_runs experiments.
-        results_random[i, j] = np.mean(angles_random)
-        results_onehot[i, j] = np.mean(angles_onehot)
+            orig_o = one_hot_vector(n)
+            new_o = np.array([max(np.random.normal(0, s, 20), key=abs) 
+                              if abs(orig_o[k]) < max(np.random.normal(0, s, 20), key=abs) 
+                              else orig_o[k] for k in range(n)])
+            angles_o.append(compute_angle(orig_o, new_o))
+        results_random[i, j] = np.mean(angles_r)
+        results_onehot[i, j] = np.mean(angles_o)
 
-# Determine global min and max for the color scale
-global_min = min(results_random.min(), results_onehot.min())
-global_max = max(results_random.max(), results_onehot.max())
+vmin = min(results_random.min(), results_onehot.min())
+vmax = max(results_random.max(), results_onehot.max())
 
-# Create a figure with two subplots side by side
+# --- Plot with adjusted tick fontsize and suptitle layout ---
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+fig.subplots_adjust(right=0.85, top=0.84)  # Increase top margin for suptitle
 
-# Adjust space on the right so the color bar doesn't overlap the second subplot
-fig.subplots_adjust(right=0.85)
-
-# Plot for random unit vectors, with common vmin/vmax
+# Random unit vectors heatmap
 im1 = ax1.imshow(results_random, aspect='auto', origin='lower',
                  extent=[min(dims), max(dims), min(s_values), max(s_values)],
-                 vmin=global_min, vmax=global_max)
-ax1.set_title('Average Angle Change: Random Unit Vector')
-ax1.set_xlabel('Dimensionality (n)')
-ax1.set_ylabel('Standard Deviation (s)')
+                 vmin=vmin, vmax=vmax)
+ax1.set_title('Random Unit Vector', fontsize=22)
+ax1.set_xlabel('Dimensionality (n)', fontsize=18)
+ax1.set_ylabel('Noise (s)', fontsize=18)
+ax1.tick_params(axis='both', labelsize=16)
 
-# Plot for one-hot vectors, also with common vmin/vmax
+# One-hot vectors heatmap
 im2 = ax2.imshow(results_onehot, aspect='auto', origin='lower',
                  extent=[min(dims), max(dims), min(s_values), max(s_values)],
-                 vmin=global_min, vmax=global_max)
-ax2.set_title('Average Angle Change: One-Hot Vector')
-ax2.set_xlabel('Dimensionality (n)')
-ax2.set_ylabel('Standard Deviation (s)')
+                 vmin=vmin, vmax=vmax)
+ax2.set_title('One-Hot Vector', fontsize=22)
+ax2.set_xlabel('Dimensionality (n)', fontsize=18)
+ax2.set_ylabel('Noise (s)', fontsize=18)
+ax2.tick_params(axis='both', labelsize=16)
 
-# Add a new set of axes for the color bar on the right
-cbar_ax = fig.add_axes([0.88, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
+# Colorbar
+cbar_ax = fig.add_axes([0.88, 0.13, 0.02, 0.7])
 cbar = fig.colorbar(im1, cax=cbar_ax)
-cbar.set_label('Average angle (radians)')
+cbar.set_label('Average change (radians)', fontsize=18)
+cbar.ax.tick_params(labelsize=16)
 
-fig.suptitle('Comparison of Angle Changes after Max Pooling (Common Color Scale)', y=0.98)
+# Adjust suptitle
+fig.suptitle('Effect of Max Pooling on Vector Orientation', fontsize=24)
 plt.show()
