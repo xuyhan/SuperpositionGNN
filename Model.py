@@ -171,7 +171,7 @@ class GNNModel(nn.Module):
         """
         Forward pass: Applies convolutional layers, then the specified global pooling,
         then the final linear layer to produce logits.
-        """
+        """ 
         for i, conv in enumerate(self.convs):
             x = conv(x, edge_index)
             if i < len(self.convs) - 1:
