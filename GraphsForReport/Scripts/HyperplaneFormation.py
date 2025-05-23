@@ -23,7 +23,7 @@ y_smooth = moving_average(sv_ratio, window_size)
 # Plot
 plt.figure()
 # plt.plot(input_size, sv_ratio, marker='o', linestyle='-', label='Original')
-plt.plot(input_size, y_smooth, linestyle='-', label=f'{window_size}-point MA (adaptive edges)')
+plt.plot(input_size, y_smooth, linestyle='-', color= 'black', label=f'{window_size}-point MA (adaptive edges)')
 plt.xlabel('Feature Number')
 plt.ylabel('Singular Value Rattio')
 plt.title('Singular Value Ratio vs Feature Number')

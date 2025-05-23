@@ -203,6 +203,7 @@ def main(specific_rows, Mode):
         "log_dir": "runs/tox21",
         "file_path": "tox21",
         "save": True,
+        "track_singular_values": True,
 
         # Avoid silly errors
         "num_nodes": 20,          # Not used in Tox21

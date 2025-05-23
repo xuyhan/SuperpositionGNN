@@ -59,23 +59,23 @@ def plot_multiline_from_folder(ax, folder, file_pattern="*.csv", metric_name="Me
 #########################################
 if __name__ == "__main__":
     # Set your three folder paths here:
-    folder_sv6  = os.path.normpath(os.path.join("GraphsForReport", "Data", "SV_Evolution", "6"))
-    folder_sv10 = os.path.normpath(os.path.join("GraphsForReport", "Data", "SV_Evolution", "10"))
-    folder_sv14 = os.path.normpath(os.path.join("GraphsForReport", "Data", "SV_Evolution", "14"))
+    folder_sv6  = os.path.normpath(os.path.join("GraphsForReport", "Data", "SV_Evolution_Tox", "5"))
+    folder_sv10 = os.path.normpath(os.path.join("GraphsForReport", "Data", "SV_Evolution_Tox", "7"))
+    folder_sv14 = os.path.normpath(os.path.join("GraphsForReport", "Data", "SV_Evolution_Tox", "9"))
     
     # Create figure with three subplots side by side
     fig, axes = plt.subplots(ncols=3, figsize=(18, 6))
-    fig.suptitle("Evolution of Singular Values", fontsize=16, y=0.97)
+    fig.suptitle("Evolution of Singular Values (Tox21)", fontsize=16, y=0.97)
     
     # Plot each folder’s CSVs in its own subplot, all lines black
     plot_multiline_from_folder(axes[0], folder_sv6,  metric_name="Singular Values")
-    axes[0].set_title("Feature number = 6",  fontsize=14)
+    axes[0].set_title("Hidden Dimension = 5",  fontsize=14)
     
     plot_multiline_from_folder(axes[1], folder_sv10, metric_name="Singular Values")
-    axes[1].set_title("Feature number = 10", fontsize=14)
+    axes[1].set_title("Hidden Dimension = 7", fontsize=14)
     
     plot_multiline_from_folder(axes[2], folder_sv14, metric_name="Singular Values")
-    axes[2].set_title("Feature number = 14", fontsize=14)
+    axes[2].set_title("Hidden Dimension = 9", fontsize=14)
     
     plt.tight_layout()
     plt.show()
