@@ -1,0 +1,970 @@
+{
+    "experiment_config": {
+        "mode": "simple",
+        "num_categories": 5,
+        "p": 0.3,
+        "num_nodes": 20,
+        "motif_dim": 0,
+        "num_train_samples": 5000,
+        "num_test_samples": 1500,
+        "batch_size": 16,
+        "in_dim": 5,
+        "hidden_dims": [
+            2,
+            2
+        ],
+        "lr": 0.01,
+        "use_weighting": true,
+        "importance": [
+            15.0,
+            10.0
+        ],
+        "phase1_epochs": 0,
+        "phase2_epochs": 50,
+        "device": "cpu",
+        "model_type": "GCN",
+        "loss": "BCE",
+        "pooling": "max",
+        "log_dir": "runs/BCE/2/GCN/small_direct/max/5/high",
+        "file_path": "BCE/2/GCN/small_direct/max/5/high",
+        "add_graph": false,
+        "track_embeddings": false,
+        "save": true
+    },
+    "sparcity": 0.9370393313871229,
+    "summary format:": "Key: (Num of active features, Num of accurate feature, Geometry, Collapsed). Loss, s.d. Loss, Count",
+    "summary": {
+        "(2, 2, 2, 0)": [
+            0.21779592784472873,
+            0.005853913263116702,
+            35
+        ],
+        "(1, 1, 1, 0)": [
+            0.2458563177718057,
+            0.016505864727149603,
+            12
+        ],
+        "(0, 0, 'Failed', 0)": [
+            0.30536122218767797,
+            0.006460055729189155,
+            3
+        ]
+    },
+    "results": [
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21615498518943788,
+            "Rank": 2,
+            "Singular values": [
+                4.650619983673096,
+                2.354520797729492
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.24776848713556926,
+            "Rank": 2,
+            "Singular values": [
+                3.6641809940338135,
+                0.9565103650093079
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21860695882638295,
+            "Rank": 2,
+            "Singular values": [
+                5.303348064422607,
+                2.911926746368408
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.21528705263137818,
+            "Rank": 2,
+            "Singular values": [
+                3.500612497329712,
+                2.5233843326568604
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.25959212191899617,
+            "Rank": 2,
+            "Singular values": [
+                2.039761543273926,
+                1.1790193319320679
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.20844604674975079,
+            "Rank": 2,
+            "Singular values": [
+                5.750508785247803,
+                3.490872383117676
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21734697190920513,
+            "Rank": 2,
+            "Singular values": [
+                2.7920334339141846,
+                2.3923306465148926
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2195918076435725,
+            "Rank": 2,
+            "Singular values": [
+                3.7681093215942383,
+                2.7710769176483154
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22298550939559936,
+            "Rank": 2,
+            "Singular values": [
+                2.6740522384643555,
+                2.3524603843688965
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21724183734258015,
+            "Rank": 2,
+            "Singular values": [
+                3.359032392501831,
+                1.6620080471038818
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 0,
+            "Num of accurate feature": 0,
+            "Geometry": "Failed",
+            "Collapsed": 0,
+            "Loss": 0.306247137149175,
+            "Rank": 1,
+            "Singular values": [
+                0.5191968679428101,
+                1.7244011774053547e-09
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22401175737380982,
+            "Rank": 2,
+            "Singular values": [
+                2.741101026535034,
+                2.639111280441284
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.213336786031723,
+            "Rank": 2,
+            "Singular values": [
+                2.895084857940674,
+                2.230874538421631
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2176463143825531,
+            "Rank": 2,
+            "Singular values": [
+                3.1744494438171387,
+                2.595339298248291
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2167613896926244,
+            "Rank": 2,
+            "Singular values": [
+                4.725018501281738,
+                2.4594688415527344
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21762035989761352,
+            "Rank": 2,
+            "Singular values": [
+                2.698460578918457,
+                2.289198160171509
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22865739941596985,
+            "Rank": 2,
+            "Singular values": [
+                2.8086307048797607,
+                2.534994602203369
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.22573707962036133,
+            "Rank": 2,
+            "Singular values": [
+                2.4424026012420654,
+                1.9100810289382935
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21672406506538391,
+            "Rank": 2,
+            "Singular values": [
+                4.472429275512695,
+                2.9869961738586426
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.2710560476779938,
+            "Rank": 2,
+            "Singular values": [
+                2.7375869750976562,
+                1.3399356603622437
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2190975797176361,
+            "Rank": 2,
+            "Singular values": [
+                2.611908197402954,
+                2.0551130771636963
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.20765235447883607,
+            "Rank": 2,
+            "Singular values": [
+                4.424045085906982,
+                2.735463857650757
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 0,
+            "Num of accurate feature": 0,
+            "Geometry": "Failed",
+            "Collapsed": 0,
+            "Loss": 0.31279289778073627,
+            "Rank": 1,
+            "Singular values": [
+                0.6845367550849915,
+                1.5828648392002265e-09
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2122760153611501,
+            "Rank": 2,
+            "Singular values": [
+                3.0204970836639404,
+                2.7282345294952393
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22016792444388072,
+            "Rank": 2,
+            "Singular values": [
+                3.0482990741729736,
+                2.091543436050415
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.24199700065453847,
+            "Rank": 2,
+            "Singular values": [
+                3.2430100440979004,
+                2.5773472785949707
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.20326978953679403,
+            "Rank": 2,
+            "Singular values": [
+                4.841742038726807,
+                2.2918429374694824
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22103819950421652,
+            "Rank": 2,
+            "Singular values": [
+                2.916780948638916,
+                2.205913543701172
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22095342270533244,
+            "Rank": 2,
+            "Singular values": [
+                2.6531598567962646,
+                2.194688320159912
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2217362978855769,
+            "Rank": 2,
+            "Singular values": [
+                2.7450356483459473,
+                2.4650449752807617
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21327969257036844,
+            "Rank": 2,
+            "Singular values": [
+                5.116903781890869,
+                2.493927478790283
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.2618356756369273,
+            "Rank": 2,
+            "Singular values": [
+                2.253387212753296,
+                0.8430406451225281
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21624421652158102,
+            "Rank": 2,
+            "Singular values": [
+                3.048495054244995,
+                2.70589542388916
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21922152372201284,
+            "Rank": 2,
+            "Singular values": [
+                3.0508275032043457,
+                2.4777944087982178
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 0,
+            "Num of accurate feature": 0,
+            "Geometry": "Failed",
+            "Collapsed": 0,
+            "Loss": 0.29704363163312275,
+            "Rank": 1,
+            "Singular values": [
+                0.581299901008606,
+                1.9479848289982726e-10
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.22767166213194528,
+            "Rank": 2,
+            "Singular values": [
+                2.754603624343872,
+                1.1819483041763306
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.23077374239762624,
+            "Rank": 2,
+            "Singular values": [
+                2.9350926876068115,
+                2.1249282360076904
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.22062960942586263,
+            "Rank": 2,
+            "Singular values": [
+                2.375380039215088,
+                2.112626075744629
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.25559949787457786,
+            "Rank": 2,
+            "Singular values": [
+                2.5005104541778564,
+                1.7427347898483276
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21390057384967803,
+            "Rank": 2,
+            "Singular values": [
+                5.76640510559082,
+                2.2422938346862793
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21696636839707692,
+            "Rank": 2,
+            "Singular values": [
+                2.712038993835449,
+                2.4429659843444824
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.26247793380419415,
+            "Rank": 2,
+            "Singular values": [
+                2.2212181091308594,
+                1.379754662513733
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21604695041974387,
+            "Rank": 2,
+            "Singular values": [
+                5.009962558746338,
+                2.760852813720703
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.2467862180074056,
+            "Rank": 2,
+            "Singular values": [
+                2.133219003677368,
+                1.1494977474212646
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21857349316279093,
+            "Rank": 2,
+            "Singular values": [
+                4.291751384735107,
+                2.6857614517211914
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.23272094734509785,
+            "Rank": 2,
+            "Singular values": [
+                5.793466091156006,
+                2.1809511184692383
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21532547001043956,
+            "Rank": 2,
+            "Singular values": [
+                3.5408573150634766,
+                1.7091302871704102
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.21791654880841574,
+            "Rank": 2,
+            "Singular values": [
+                6.213086128234863,
+                3.3267018795013428
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 1,
+            "Num of accurate feature": 1,
+            "Geometry": 1,
+            "Collapsed": 0,
+            "Loss": 0.23446703616778056,
+            "Rank": 2,
+            "Singular values": [
+                2.774656295776367,
+                2.3193390369415283
+            ]
+        },
+        {
+            "Num of features": 5,
+            "Num of active features": 2,
+            "Num of accurate feature": 2,
+            "Geometry": 2,
+            "Collapsed": 0,
+            "Loss": 0.2099345653851827,
+            "Rank": 2,
+            "Singular values": [
+                2.9361870288848877,
+                2.676100730895996
+            ]
+        }
+    ],
+    "average embeddings summary": {
+        "(2, 2, 2, 0)": {
+            "(1, 0, 0, 0, 0)": [
+                1.3129215240478516,
+                -0.6447619795799255
+            ],
+            "(0, 0, 0, 0, 1)": [
+                -1.6335783004760742,
+                -0.6464133858680725
+            ],
+            "(0, 1, 0, 0, 0)": [
+                -2.2362563610076904,
+                2.0072710514068604
+            ],
+            "(0, 0, 1, 0, 0)": [
+                -2.6146998405456543,
+                -0.6054996848106384
+            ],
+            "(0, 0, 0, 1, 0)": [
+                -2.3031821250915527,
+                -0.6389155387878418
+            ]
+        },
+        "(1, 1, 1, 0)": {
+            "(0, 0, 0, 1, 0)": [
+                0.10476382076740265,
+                -1.5829142332077026
+            ],
+            "(0, 1, 0, 0, 0)": [
+                -0.035076532512903214,
+                -1.8948142528533936
+            ],
+            "(0, 0, 0, 0, 1)": [
+                -0.03033382259309292,
+                -1.8842363357543945
+            ],
+            "(1, 0, 0, 0, 0)": [
+                0.9534047842025757,
+                0.3098950684070587
+            ],
+            "(0, 0, 1, 0, 0)": [
+                -0.04499930143356323,
+                -1.9169460535049438
+            ]
+        },
+        "(0, 0, 'Failed', 0)": {
+            "(0, 0, 0, 1, 0)": [
+                -0.19693812727928162,
+                -0.12299776822328568
+            ],
+            "(0, 1, 0, 0, 0)": [
+                -0.19693811237812042,
+                -0.12299776077270508
+            ],
+            "(1, 0, 0, 0, 0)": [
+                -0.19693811237812042,
+                -0.12299776077270508
+            ],
+            "(0, 0, 0, 0, 1)": [
+                -0.19693812727928162,
+                -0.12299776822328568
+            ],
+            "(0, 0, 1, 0, 0)": [
+                -0.19693812727928162,
+                -0.12299776822328568
+            ]
+        }
+    },
+    "model summary": {
+        "(2, 2, 2, 0)": {
+            "convs.0.bias": [
+                1.5687097311019897,
+                -1.7358996868133545
+            ],
+            "convs.0.lin.weight": [
+                [
+                    -2.3975820541381836,
+                    -0.020618228241801262,
+                    -0.0857764407992363,
+                    0.18881723284721375,
+                    -0.16782847046852112
+                ],
+                [
+                    -0.08340206742286682,
+                    3.5364136695861816,
+                    -0.01710069179534912,
+                    0.07477684319019318,
+                    0.09744326025247574
+                ]
+            ],
+            "convs.1.bias": [
+                2.253603458404541,
+                -1.25553560256958
+            ],
+            "convs.1.lin.weight": [
+                [
+                    -4.948627471923828,
+                    -0.12742969393730164
+                ],
+                [
+                    0.34379807114601135,
+                    5.349025726318359
+                ]
+            ],
+            "lin_out.weight": [
+                [
+                    6.815399169921875,
+                    -0.4365033507347107
+                ],
+                [
+                    0.09964407235383987,
+                    7.310264587402344
+                ],
+                [
+                    -0.19969972968101501,
+                    -0.7243625521659851
+                ],
+                [
+                    -0.14936114847660065,
+                    -0.4563765823841095
+                ],
+                [
+                    -0.10417591035366058,
+                    -0.41169682145118713
+                ]
+            ],
+            "lin_out.bias": [
+                -3.9887452125549316,
+                -6.069262504577637,
+                -1.9695733785629272,
+                -1.9670593738555908,
+                -1.7826744318008423
+            ]
+        },
+        "(1, 1, 1, 0)": {
+            "convs.0.bias": [
+                -0.3704381585121155,
+                1.470645546913147
+            ],
+            "convs.0.lin.weight": [
+                [
+                    -1.4131240844726562,
+                    0.3260350525379181,
+                    -1.0459885597229004,
+                    -0.13992087543010712,
+                    -0.7115224599838257
+                ],
+                [
+                    -2.224022626876831,
+                    -0.08918764442205429,
+                    0.048858415335416794,
+                    -0.08715151995420456,
+                    0.05428122356534004
+                ]
+            ],
+            "convs.1.bias": [
+                1.209886908531189,
+                0.8819530010223389
+            ],
+            "convs.1.lin.weight": [
+                [
+                    -1.1346241235733032,
+                    -1.385696291923523
+                ],
+                [
+                    -0.8754603266716003,
+                    -3.090657949447632
+                ]
+            ],
+            "lin_out.weight": [
+                [
+                    2.3502016067504883,
+                    10.215622901916504
+                ],
+                [
+                    -0.8233763575553894,
+                    0.23391231894493103
+                ],
+                [
+                    -1.396864891052246,
+                    0.5250450372695923
+                ],
+                [
+                    -0.9596258997917175,
+                    0.13158221542835236
+                ],
+                [
+                    -0.8121855854988098,
+                    0.10045028477907181
+                ]
+            ],
+            "lin_out.bias": [
+                -0.7135325074195862,
+                -0.9327166676521301,
+                -0.5269945859909058,
+                -1.1331502199172974,
+                -1.1527210474014282
+            ]
+        },
+        "(0, 0, 'Failed', 0)": {
+            "convs.0.bias": [
+                -0.315372496843338,
+                -0.28842413425445557
+            ],
+            "convs.0.lin.weight": [
+                [
+                    0.5702272057533264,
+                    0.5329670310020447,
+                    0.6355327367782593,
+                    -0.11039158701896667,
+                    -0.44705647230148315
+                ],
+                [
+                    0.7082259058952332,
+                    0.32798343896865845,
+                    0.15474432706832886,
+                    -0.32945847511291504,
+                    0.37755286693573
+                ]
+            ],
+            "convs.1.bias": [
+                -0.196938157081604,
+                -0.12299776077270508
+            ],
+            "convs.1.lin.weight": [
+                [
+                    -0.8823174834251404,
+                    -0.44753411412239075
+                ],
+                [
+                    -0.08666917681694031,
+                    -0.8099997043609619
+                ]
+            ],
+            "lin_out.weight": [
+                [
+                    1.3799554109573364,
+                    1.1280373334884644
+                ],
+                [
+                    1.066037893295288,
+                    0.9750747084617615
+                ],
+                [
+                    0.8242760896682739,
+                    0.8876981735229492
+                ],
+                [
+                    0.5805363655090332,
+                    0.5318309664726257
+                ],
+                [
+                    0.7309022545814514,
+                    0.6015762090682983
+                ]
+            ],
+            "lin_out.bias": [
+                -1.04331636428833,
+                -1.1953812837600708,
+                -1.1340281963348389,
+                -1.1662167310714722,
+                -1.2752896547317505
+            ]
+        }
+    }
+}
