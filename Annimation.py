@@ -7,6 +7,19 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 import networkx as nx
 
+# -----------------------------
+# Global visualization parameters
+# -----------------------------
+FONT_SIZE = 24  # Set this to adjust all text and tick sizes
+plt.rcParams.update({
+    'font.size': FONT_SIZE,
+    'axes.titlesize': FONT_SIZE,
+    'axes.labelsize': FONT_SIZE,
+    'xtick.labelsize': FONT_SIZE,
+    'ytick.labelsize': FONT_SIZE,
+    'legend.fontsize': FONT_SIZE
+})
+
 # PyG imports
 from torch_geometric.data import Data
 
@@ -24,6 +37,7 @@ def load_experiment_results(file_path):
         data = json.load(f)
     return data
 
+
 def choose_best_model_key(data):
     summary = data["summary"]
     best_key = None
@@ -34,6 +48,7 @@ def choose_best_model_key(data):
             best_loss = avg_loss
             best_key = k
     return best_key
+
 
 def assign_weights_from_dict(model, weight_dict):
     state_dict = model.state_dict()
@@ -98,8 +113,7 @@ def plot_all_layers(embeddings_by_layer, G, default_pos, ax_row=None, scale=0.01
         if emb.ndim == 2 and emb.shape[1] == 2:
             for i, (x_pos, y_pos) in default_pos.items():
                 dx, dy = emb[i] * scale
-                ax.arrow(x_pos, y_pos, dx, dy, head_width=0.05, head_length=0.1, fc='black', ec='black')
- 
+                ax.arrow(x_pos, y_pos, dx, dy, head_width=0.05, head_length=0.1, fc='black', ec='black', linewidth=3)
 
 # -----------------------------
 # Plot grid for count mode: one row per graph type
@@ -146,9 +160,14 @@ def plot_count_mode_grid(model, generator):
 # -----------------------------
 # Plot grid for motif mode: one row per motif type + pooled vector arrow
 # -----------------------------
-def plot_motif_mode_grid(model, generator):
-    # Set scale for arrows
+def plot_motif_mode_grid(model, generator, pooled_head_widths=None):
+    # Default arrow head widths for each motif row
+    if pooled_head_widths is None:
+        pooled_head_widths = [0.1, 0.2, 0.3]
+
     scales = [0.1, 0.4, 0.01]
+    motif_name = ["Triangle", "Square", "Pentagon"]
+
     sample = generator.generate_single_graph()
     num_types = sample.y.shape[-1]
     collected = {}
@@ -157,6 +176,7 @@ def plot_motif_mode_grid(model, generator):
         label = int(torch.argmax(data.y).item())
         if label not in collected:
             collected[label] = data
+
     embeddings_list, Gs, poses = [], [], []
     for label in sorted(collected.keys()):
         data = collected[label]
@@ -169,42 +189,48 @@ def plot_motif_mode_grid(model, generator):
         pos = nx.spring_layout(G, seed=42)
         Gs.append(G)
         poses.append(pos)
+
     num_rows = len(embeddings_list)
     num_layers = len(embeddings_list[0])
-    # +1 column for pooled vector arrow
-    fig, axes = plt.subplots(num_rows, num_layers + 1, figsize=(4 * (num_layers + 1), 4 * num_rows))
+    fig, axes = plt.subplots(
+        num_rows, num_layers + 1,
+        figsize=(4 * (num_layers + 1), 4 * num_rows)
+    )
     if num_rows == 1:
         axes = np.expand_dims(axes, 0)
-    if num_layers + 1 == 1:
-        axes = np.expand_dims(axes, 1)
+
     for r in range(num_rows):
-        print(r)
         for c in range(num_layers):
             ax = axes[r, c]
             emb = embeddings_list[r][c]
-            plot_all_layers([emb], Gs[r], poses[r], ax_row=[ax], scale = scales[c])
-            motif_name = ["Triangle", "Square", "Pentagon"]
-            ax.set_title(f"Motif {motif_name[r]}, Layer {c}")
-        # pooled vector arrow in last column
+            plot_all_layers([emb], Gs[r], poses[r], ax_row=[ax], scale=scales[c])
+            ax.set_title(f"{motif_name[r]}, Layer {c}")
+
+        # Pooled vector arrow in last column
         pooled = embeddings_list[r][-1].mean(axis=0)
         ax_pool = axes[r, num_layers]
-        # coordinate axes
-        ax_pool.axhline(0, color='black', linewidth=1)
-        ax_pool.axvline(0, color='black', linewidth=1)
-        # arrow from origin
-        x_end, y_end = pooled[0], pooled[1]
-        ax_pool.arrow(0, 0, x_end, y_end, head_width=0.05, head_length=0.1, fc='black', ec='black')
-        lim = max(abs(x_end), abs(y_end)) * 1.2
+        ax_pool.axhline(0, color='black', linewidth=2)
+        ax_pool.axvline(0, color='black', linewidth=2)
+
+        # Draw arrow with custom head width
+        hw = pooled_head_widths[r]
+        ax_pool.arrow(
+            0, 0, pooled[0], pooled[1],
+            head_width=hw, head_length=0.1,
+            fc='black', ec='black',
+            linewidth=2, width=0.01,
+            length_includes_head=True
+        )
+
+        lim = max(abs(pooled[0]), abs(pooled[1])) * 1.2
         ax_pool.set_xlim(-lim, lim)
         ax_pool.set_ylim(-lim, lim)
         ax_pool.set_aspect('equal')
-        motif_name = ["Triangle", "Square", "Pentagon"]
-        ax_pool.set_title(f"Motif {motif_name[r]}, Pooled")
-        #ax_pool.axis('off')
-    plt.tight_layout()
-    # plt.savefig("motif_mode_grid.png", dpi=300)
-    plt.show()
+        ax_pool.set_title(f"{motif_name[r]}, Pooled")
 
+    plt.tight_layout()
+    plt.savefig("count_mode_grid.png", dpi=300)
+    plt.show()
 # -----------------------------
 # Main script: auto-detect mode and GNN type
 # -----------------------------
@@ -251,7 +277,7 @@ def main():
             p=exp_config.get("p", 0.25),
             num_nodes=exp_config.get("num_nodes", 20),
             chain_length_min=exp_config.get("chain_length_min", 2),
-            chain_length_max = 4, # For plotting purposes
+            chain_length_max=3, # For plotting purposes
             motif_dim=exp_config.get("motif_dim", 3)
         )
         plot_motif_mode_grid(model, generator)
