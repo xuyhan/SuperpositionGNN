@@ -282,3 +282,80 @@ def mean_singular_values(results: List[Dict[str, Any]]) -> Tuple[float, float]:
     mean_second  = sum(second)  / len(second) if second else 0.0
 
     return mean_highest, mean_second
+
+
+def alignment_index(embeddings: Dict[Any, torch.Tensor]) -> Tuple[float, Tuple[float, float]]:
+    """Compute the Alignment Index (AI) for a set of embedding vectors.
+
+    The AI measures how axis‑aligned a collection of vectors is. It is defined
+    as the mean over vectors of ``max(|v_j|) / ||v||_2``.
+
+    Parameters
+    ----------
+    embeddings : Dict[Any, torch.Tensor]
+        Mapping from keys to 1‑D embedding tensors. The values may also be
+        NumPy arrays or lists, in which case they are converted automatically.
+
+    Returns
+    -------
+    Tuple[float, Tuple[float, float]]
+        ``(ai, (lower, upper))`` where ``ai`` is the mean Alignment Index and
+        ``(lower, upper)`` is the 95% confidence interval computed using the
+        standard error ``1.96 * sd / sqrt(n)``.
+    """
+
+    # Convert to a list of 1-D numpy arrays
+    vecs = []
+    for v in embeddings.values():
+        if isinstance(v, torch.Tensor):
+            v = v.detach().cpu().numpy()
+        vecs.append(np.asarray(v, dtype=float))
+
+    if not vecs:
+        return 0.0, (0.0, 0.0)
+
+    ratios = []
+    for v in vecs:
+        norm = np.linalg.norm(v)
+        if norm == 0:
+            continue
+        ratios.append(np.max(np.abs(v)) / norm)
+
+    if not ratios:
+        return 0.0, (0.0, 0.0)
+
+    ratios = np.array(ratios)
+    ai = ratios.mean()
+    sd = ratios.std(ddof=1) if len(ratios) > 1 else 0.0
+    se = sd / np.sqrt(len(ratios)) if len(ratios) > 0 else 0.0
+    delta = 1.96 * se
+    return ai, (ai - delta, ai + delta)
+
+
+def alignment_index_list(embeddings_list: List[Dict[Any, torch.Tensor]]) -> Tuple[float, Tuple[float, float]]:
+    """Compute the Alignment Index over multiple embedding dictionaries.
+
+    Parameters
+    ----------
+    embeddings_list : list of dict
+        Each element is passed to :func:`alignment_index`.
+
+    Returns
+    -------
+    Tuple[float, Tuple[float, float]]
+        Mean AI across the list and its 95% confidence interval.
+    """
+    if not embeddings_list:
+        return 0.0, (0.0, 0.0)
+
+    values = []
+    for emb in embeddings_list:
+        ai, _ = alignment_index(emb)
+        values.append(ai)
+
+    values = np.array(values)
+    mean_ai = values.mean()
+    sd = values.std(ddof=1) if len(values) > 1 else 0.0
+    se = sd / np.sqrt(len(values))
+    delta = 1.96 * se
+    return mean_ai, (mean_ai - delta, mean_ai + delta)

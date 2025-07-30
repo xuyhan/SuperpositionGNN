@@ -44,7 +44,9 @@ def run_single_experiment(experiment_config):
     summary, model_summary, average_embeddings_summary = Trainer.summarize_config_losses(config_losses, model_params, average_embeddings)
     # Saves all elements in an extra file
     get_all_elements(experiment_config, average_embeddings)
-    
+    # Alignment Index on the averaged embeddings
+    ai_mean, ai_ci = alignment_index_list(list(average_embeddings_summary.values()))
+
     # Dynamically build a descriptive file name.
     mode = experiment_config["mode"]
     model_type = experiment_config["model_type"]
@@ -71,7 +73,9 @@ def run_single_experiment(experiment_config):
         "summary": summary,
         "results": readable_results,
         "average embeddings summary": average_embeddings_summary,
-        "model summary": model_summary
+        "model summary": model_summary,
+        "alignment index": ai_mean,
+        "alignment index CI": ai_ci
     }
     
     # Convert keys/objects to strings as necessary.
