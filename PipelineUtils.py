@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Dict, Tuple, Any
 import itertools
 
+
 def convert_keys_to_str(obj):
     """
     Recursively convert dictionary keys to strings and convert non-serializable objects
@@ -28,6 +29,7 @@ def convert_keys_to_str(obj):
     else:
         return obj
 
+
 def get_all_elements(experimental_config, average_embeddings):
     """
     If enabled in the experimental configuration, extract all elements from the average embeddings
@@ -45,7 +47,7 @@ def get_all_elements(experimental_config, average_embeddings):
             for tensor_vector in elements_dict.values():
                 for number in tensor_vector:
                     all_elements.append(number.item())
-        
+
         output_dir = f"experiment_results/all_elements/{experimental_config['gm_p']}"
         os.makedirs(output_dir, exist_ok=True)
         output_file_path = os.path.join(output_dir, "all_elements.txt")
@@ -53,6 +55,7 @@ def get_all_elements(experimental_config, average_embeddings):
             file.write(str(all_elements))
         return all_elements
     return None
+
 
 def make_readable_results(results, all_average_embeddings, trainer):
     """
@@ -69,49 +72,49 @@ def make_readable_results(results, all_average_embeddings, trainer):
     """
     readable_results = []
     keys = [
-        "Num of features",         # index 0
+        "Num of features",  # index 0
         "Num of active features",  # index 1
-        "Num of accurate feature", # index 2
-        "Geometry",                # index 3
-        "Collapsed",               # index 4
-        "Loss"                     # index 5
+        "Num of accurate feature",  # index 2
+        "Geometry",  # index 3
+        "Collapsed",  # index 4
+        "Loss"  # index 5
     ]
 
     for result_entry, embedding in zip(results, all_average_embeddings):
         rank, singular_values = trainer.svd_analysis(embedding)
-        entry_dict = { key: result_entry[i] for i, key in enumerate(keys) }
+        entry_dict = {key: result_entry[i] for i, key in enumerate(keys)}
         entry_dict["Rank"] = rank
         entry_dict["Singular values"] = singular_values.tolist()
         readable_results.append(entry_dict)
-    
+
     return readable_results
 
 
 def determine_percentage_of_collapsed(readable_results):
     """
     Compute the percentage of runs where the computed rank is less than the number of accurate features.
-    
+
     Parameters:
         readable_results (list of dict): Each dictionary should contain at least the following keys:
             - "Rank": an integer representing the computed rank,
             - "Num of accurate feature": an integer representing the number of accurate features.
-    
+
     Returns:
-        float: The percentage of runs where the rank is less than the number 
+        float: The percentage of runs where the rank is less than the number
                of accurate features.
     """
     if not readable_results:
         return 0.0  # Avoid division by zero.
-    
+
     count = 0
     total_runs = len(readable_results)
-    
+
     for result in readable_results:
         rank = result.get("Rank", 0)
         accurate_features = result.get("Num of accurate feature", 0)
         if rank < accurate_features:
             count += 1
-            
+
     percentage = (count / total_runs) * 100
     return percentage
 
@@ -123,7 +126,7 @@ def get_hidden_dims(mode, **kwargs):
     For mode "simple":
         Expected keyword arguments:
             - feature_num:
-                * If type_str (from kwargs) is "specify", then feature_num should be a string 
+                * If type_str (from kwargs) is "specify", then feature_num should be a string
                   containing comma‐separated numbers (e.g., "16, 10, 10"). In this case, the first number
                   is used for 'num_categories' and 'in_dim', and the remaining numbers become the hidden dimensions.
                 * Otherwise, feature_num must be a number (or string convertible to int) representing
@@ -183,19 +186,21 @@ def get_hidden_dims(mode, **kwargs):
                 }
             elif depth == 3:
                 hidden_dim_lookup = {
-                    5: {'large': [8, 8, 8], 'same': [5, 5, 5], 'small_direct': [2, 2, 2], 'small_compression': [5, 5, 2]},
-                    12: {'large': [18, 18, 18], 'same': [12, 12, 12], 'small_direct': [6, 6, 6], 'small_compression': [12, 12, 6]}
+                    5: {'large': [8, 8, 8], 'same': [5, 5, 5], 'small_direct': [2, 2, 2],
+                        'small_compression': [5, 5, 2]},
+                    12: {'large': [18, 18, 18], 'same': [12, 12, 12], 'small_direct': [6, 6, 6],
+                         'small_compression': [12, 12, 6]}
                 }
             else:
                 raise ValueError("Unsupported depth: {}.".format(depth))
-            
+
             if feature_num not in hidden_dim_lookup:
                 raise ValueError("Unsupported feature number: {} for depth {}.".format(feature_num, depth))
-            
+
             if type_str not in hidden_dim_lookup[feature_num]:
                 raise ValueError("Unsupported type: {} for feature number {} and depth {}."
                                  .format(type_str, feature_num, depth))
-            
+
             return hidden_dim_lookup[feature_num][type_str]
 
     elif mode in ("motif", "count"):
@@ -203,7 +208,7 @@ def get_hidden_dims(mode, **kwargs):
             hidden_val = int(kwargs['hidden'])
         except KeyError:
             raise ValueError("Missing required parameter 'hidden' for mode '{}'.".format(mode))
-        
+
         motif_lookup = {
             1: [2],
             2: [2, 2],
@@ -216,19 +221,18 @@ def get_hidden_dims(mode, **kwargs):
         if hidden_val not in motif_lookup:
             raise ValueError("Unsupported hidden value: {} for mode '{}'.".format(hidden_val, mode))
         return motif_lookup[hidden_val]
-    
+
     else:
         raise ValueError("Unsupported mode: {}. Use 'simple', 'motif', or 'count'.".format(mode))
-    
 
-    
+
 def mean_std_global(stats: List[Dict[str, List[float]]]) -> float:
     """
     Compute the overall mean of all floats in all 'std' vectors.
-    
+
     Args:
         stats: List of dicts, each with a 'std' key whose value is a list of floats.
-        
+
     Returns:
         A single float: the mean of all std values.
     """
@@ -237,7 +241,6 @@ def mean_std_global(stats: List[Dict[str, List[float]]]) -> float:
     if not all_values:
         return 0.0
     return sum(all_values) / len(all_values)
-
 
 
 def mean_singular_values(results: List[Dict[str, Any]]) -> Tuple[float, float]:
@@ -259,7 +262,7 @@ def mean_singular_values(results: List[Dict[str, Any]]) -> Tuple[float, float]:
         (mean_highest, mean_second)
     """
     highest = []
-    second  = []
+    second = []
 
     for entry in results:
         n_feat = entry.get("Num of features", 0)
@@ -279,6 +282,6 @@ def mean_singular_values(results: List[Dict[str, Any]]) -> Tuple[float, float]:
         return 0.0, 0.0
 
     mean_highest = sum(highest) / len(highest)
-    mean_second  = sum(second)  / len(second) if second else 0.0
+    mean_second = sum(second) / len(second) if second else 0.0
 
     return mean_highest, mean_second

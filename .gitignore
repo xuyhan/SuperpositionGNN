@@ -1,2 +1,12 @@
 venv/
 runs/
+
+*.pt
+*.json
+*.svg
+*.pdf
+*.png
+
+.idea/
+**/__pycache__/
+
