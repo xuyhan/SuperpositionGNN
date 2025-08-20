@@ -1,7 +1,8 @@
 venv/
 runs/
 
-*.pt
+*.txt
+*.log
 *.json
 *.svg
 *.pdf

@@ -9,6 +9,21 @@ import numpy as np
 from src.logger import CustomLogger
 
 
+def compute_pos_weight_from_loader(loader, num_classes):
+    pos = torch.zeros(num_classes, dtype=torch.float64)  # higher precision for sums
+    total = 0
+    with torch.no_grad():
+        for batch in loader:
+            y = batch.y.view(-1, num_classes).to(torch.float32)
+            pos += y.sum(dim=0).to(torch.float64)
+            total += y.shape[0]
+    neg = total - pos
+    eps = 1e-6
+    pos_weight = (neg / (pos + eps)).clamp(max=50.0).to(torch.float32)  # clip to avoid huge grads
+    prior = (pos / (pos + neg + eps)).clamp(1e-4, 1 - 1e-4).to(torch.float32)  # for bias init
+    return pos_weight, prior
+
+
 class Constants:
 
     MODEL_SAVE_DIR = Path(__file__).resolve().parents[1] / "models"

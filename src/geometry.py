@@ -64,6 +64,7 @@ def active_targets_in_representation(target_dim, avg_predictions, avg_embeddings
     sigma_active = 0.5
 
     is_active = []
+    is_accurate = []
 
     for key, preds in avg_predictions.items():
         if all(abs(key[i] - preds[i].item()) < sigma_active for i in range(target_dim)):
@@ -76,7 +77,11 @@ def active_targets_in_representation(target_dim, avg_predictions, avg_embeddings
     for key, preds in avg_predictions.items():
         if all(abs(key[i] - preds[i].item()) < sigma_accurate for i in range(target_dim)):
             num_accurate_targets += 1
-    return num_active_targets, avg_embeddings_active, num_accurate_targets, is_active
+            is_accurate.append(1)
+        else:
+            is_accurate.append(0)
+
+    return num_active_targets, avg_embeddings_active, num_accurate_targets, is_active, is_accurate
 
 
 def structure_of_representation(target_dim, avg_predictions, avg_embeddings, final_loss):
@@ -84,17 +89,15 @@ def structure_of_representation(target_dim, avg_predictions, avg_embeddings, fin
     Returns the structure of the representation (i.e. the number of active targets, the number of accurate targets,
     the geometry of the representation, and whether the representation is collapsed).
     '''
-    num_active_targets, avg_embeddings_active, num_accurate_targets, is_active = active_targets_in_representation(
+    num_active_targets, avg_embeddings_active, num_accurate_targets, is_active, is_accurate = active_targets_in_representation(
         target_dim, avg_predictions, avg_embeddings)
     geometry, collapsed = geometry_of_representation(avg_embeddings_active)
     if geometry > 0:
         category_with_loss = [target_dim, num_active_targets, num_accurate_targets, geometry, collapsed, final_loss,
-                              is_active]
+                              is_active, is_accurate]
         return tuple(category_with_loss)
     else:
-        category_with_loss = [target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss,
-                              is_active]
-        return target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss, is_active
+        return target_dim, num_active_targets, num_accurate_targets, "Failed", collapsed, final_loss, is_active, is_accurate
 
 
 def geometry_analysis(results, all_model_params, all_average_embeddings):
